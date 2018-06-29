@@ -1,0 +1,95 @@
+# Vacuum records
+
+record(bo, "$(P)$(R)VacuumValve")
+{
+    field(PINI, "YES")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))VacuumValve")
+    field(ZNAM, "Off")
+    field(ONAM, "On")
+    field(VAL,  "0")
+    info(autosaveFields, "VAL")
+    info(asyn:READBACK, "1")
+}
+
+record(bi, "$(P)$(R)VacuumValve_RBV")
+{
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))VacuumValve")
+    field(ZNAM, "Off")
+    field(ONAM, "On")
+    field(SCAN, "I/O Intr")
+}
+
+record(bo, "$(P)$(R)IgnoreVacuumPump")
+{
+    field(PINI, "YES")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))IgnoreVacuumPump")
+    field(ZNAM, "Un-ignore")
+    field(ONAM, "Ignore")
+    field(VAL,  "0")
+    info(autosaveFields, "VAL")
+    info(asyn:READBACK, "1")
+}
+
+record(bi, "$(P)$(R)IgnoreVacuumPump_RBV")
+{
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))IgnoreVacuumPump")
+    field(ZNAM, "Un-ignore")
+    field(ONAM, "Ignore")
+    field(SCAN, "I/O Intr")
+}
+
+record(ai, "$(P)$(R)LinePressure_RBV")
+{
+    field(DTYP, "asynFloat64")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))LinePressure")
+    field(EGU,  "mT")
+    field(SCAN, "I/O Intr")
+}
+
+record(ai, "$(P)$(R)ChamberPressure_RBV")
+{
+    field(DTYP, "asynFloat64")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))ChamberPressure")
+    field(EGU,  "mT")
+    field(SCAN, "I/O Intr")
+}
+
+record(bi, "$(P)$(R)VacuumValveOpen_RBV")
+{
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))VacuumValveOpen")
+    field(ZNAM, "No")
+    field(ONAM, "Yes")
+    field(SCAN, "I/O Intr")
+}
+
+record(bi, "$(P)$(R)VacuumValveEnabled_RBV")
+{
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))VacuumValveEnabled")
+    field(ZNAM, "No")
+    field(ONAM, "Yes")
+    field(SCAN, "I/O Intr")
+}
+
+record(bi, "$(P)$(R)VacuumPumpRunning_RBV")
+{
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))VacuumPumpRunning")
+    field(ZNAM, "No")
+    field(ONAM, "Yes")
+    field(SCAN, "I/O Intr")
+}
+
+record(bi, "$(P)$(R)VacuumPumpIgnored_RBV")
+{
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))VacuumPumpIgnored")
+    field(ZNAM, "No")
+    field(ONAM, "Yes")
+    field(SCAN, "I/O Intr")
+}

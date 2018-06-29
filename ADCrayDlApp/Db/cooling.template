@@ -1,0 +1,124 @@
+# Cooling records
+
+record(bo, "$(P)$(R)Cooler")
+{
+    field(PINI, "YES")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))Cooler")
+    field(ZNAM, "Off")
+    field(ONAM, "On")
+    field(VAL,  "0")
+    info(autosaveFields, "VAL")
+    info(asyn:READBACK, "1")
+}
+
+record(bi, "$(P)$(R)Cooler_RBV")
+{
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))Cooler")
+    field(ZNAM, "Off")
+    field(ONAM, "On")
+    field(SCAN, "I/O Intr")
+}
+
+record(ao, "$(P)$(R)CCDTempSetpoint")
+{
+    field(PINI, "YES")
+    field(DTYP, "asynFloat64")
+    field(OUT,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))CCDTempSetpoint")
+    field(VAL,  "-80.0")
+    field(EGU,  "C")
+    info(autosaveFields, "VAL")
+}
+
+record(ai, "$(P)$(R)CCDTempSetpoint_RBV")
+{
+    field(DTYP, "asynFloat64")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))CCDTempSetpoint")
+    field(EGU,  "C")
+    field(SCAN, "I/O Intr")
+}
+
+record(ao, "$(P)$(R)CoolerTempSetpoint")
+{
+    field(PINI, "YES")
+    field(DTYP, "asynFloat64")
+    field(OUT,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))CoolerTempSetpoint")
+    field(VAL,  "-120.0")
+    field(EGU,  "C")
+    info(autosaveFields, "VAL")
+}
+
+record(ai, "$(P)$(R)CoolerTempSetpoint_RBV")
+{
+    field(DTYP, "asynFloat64")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))CoolerTempSetpoint")
+    field(EGU,  "C")
+    field(SCAN, "I/O Intr")
+}
+
+record(ai, "$(P)$(R)MeanSensorTemp_RBV")
+{
+    field(DTYP, "asynFloat64")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))MeanSensorTemp")
+    field(EGU,  "C")
+    field(SCAN, "I/O Intr")
+}
+
+record(ai, "$(P)$(R)MaxSensorTemp_RBV")
+{
+    field(DTYP, "asynFloat64")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))MaxSensorTemp")
+    field(EGU,  "C")
+    field(SCAN, "I/O Intr")
+}
+
+record(ai, "$(P)$(R)MinSensorTemp_RBV")
+{
+    field(DTYP, "asynFloat64")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))MinSensorTemp")
+    field(EGU,  "C")
+    field(SCAN, "I/O Intr")
+}
+
+record(ai, "$(P)$(R)MeanCoolerTemp_RBV")
+{
+    field(DTYP, "asynFloat64")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))MeanCoolerTemp")
+    field(EGU,  "C")
+    field(SCAN, "I/O Intr")
+}
+
+record(ai, "$(P)$(R)MaxCoolerTemp_RBV")
+{
+    field(DTYP, "asynFloat64")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))MaxCoolerTemp")
+    field(EGU,  "C")
+    field(SCAN, "I/O Intr")
+}
+
+record(ai, "$(P)$(R)MinCoolerTemp_RBV")
+{
+    field(DTYP, "asynFloat64")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))MinCoolerTemp")
+    field(EGU,  "C")
+    field(SCAN, "I/O Intr")
+}
+
+record(bi, "$(P)$(R)CoolerEnabled_RBV")
+{
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))CoolerEnabled")
+    field(ZNAM, "No")
+    field(ONAM, "Yes")
+    field(SCAN, "I/O Intr")
+}
+
+record(bi, "$(P)$(R)CoolerRunning_RBV")
+{
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))CoolerRunning")
+    field(ZNAM, "No")
+    field(ONAM, "Yes")
+    field(SCAN, "I/O Intr")
+}

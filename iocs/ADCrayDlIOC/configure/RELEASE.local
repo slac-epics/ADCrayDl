@@ -1,0 +1,56 @@
+#EPICS_BASE=/opt/codac-4.1/epics/base/
+#SUPPORT=$(EPICS_BASE)/../modules
+
+ADCORE=$(EPICS_MODULES)/ADCore/$(ADCORE_MODULE_VERSION)
+RAYONIX_ROOT = /opt/rayonix
+CRAYDL_INC = $(RAYONIX_ROOT)/include
+RAYONIX_LIB = $(RAYONIX_ROOT)/lib64
+
+BUILD_IOCS=YES
+# ===============================================================
+# Define the location and version of EPICS base
+# ===============================================================
+EPICS_SITE_TOP= /reg/g/pcds/epics
+EPICS_MODULES=$(EPICS_SITE_TOP)/$(BASE_MODULE_VERSION)/modules
+BASE_MODULE_VERSION = R3.15.5-2.0
+EPICS_BASE=$(EPICS_SITE_TOP)/base/$(BASE_MODULE_VERSION)
+RULES=$(EPICS_BASE)
+CONFIG=$(EPICS_BASE)/configure
+
+# ===============================================================
+# Define the version(s) of any other needed modules
+# ===============================================================
+# Example
+ADCORE_MODULE_VERSION   = R3.1-2.1.1
+ASYN_MODULE_VERSION     = R4.32-1.0.0
+DIAG_TIMER_MODULE_VERSION = R1.9.1
+CALC_MODULE_VERSION = R3.6.1-0.1.0
+BUSY_MODULE_VERSION  = R1.6.1-0.2.6
+SSCAN_MODULE_VERSION = R2.10.2-1.0.0
+TIMESTAMPFIFO_MODULE_VERSION = R1.5.12
+TIMESYNC_MODULE_VERSION = R2.0.0
+EVENT2_MODULE_VERSION   = R4.3.0
+
+# ============================================================
+# External Support module path definitions
+#
+# If any of these macros expand to a path which
+# contains an "include" directory, that directory will be
+# included in the compiler include path.
+#
+# If any of these macros expand to a path which
+# contains a "lib/<arch>" directory, that directory will be
+# included in the compiler link path for that architecture.
+#
+# If your build fails, look for these paths in your build output
+# ============================================================
+ADCORE    = $(EPICS_MODULES)/ADCore/$(ADCORE_MODULE_VERSION)
+ASYN    = $(EPICS_MODULES)/asyn/$(ASYN_MODULE_VERSION)
+DIAG_TIMER  = $(EPICS_MODULES)/diagTimer/$(DIAG_TIMER_MODULE_VERSION)
+CALC    = $(EPICS_MODULES)/calc/$(CALC_MODULE_VERSION)
+BUSY    = $(EPICS_MODULES)/busy/$(BUSY_MODULE_VERSION)
+SSCAN    = $(EPICS_MODULES)/sscan/$(SSCAN_MODULE_VERSION)
+ADCRAYDL = /home/hsuser/ADCrayDl
+TIMESTAMPFIFO	= $(EPICS_MODULES)/timeStampFifo/$(TIMESTAMPFIFO_MODULE_VERSION)
+EVENT2 = $(EPICS_MODULES)/event2/$(EVENT2_MODULE_VERSION)
+TIMESYNC = $(EPICS_MODULES)/timesync/$(TIMESYNC_MODULE_VERSION)

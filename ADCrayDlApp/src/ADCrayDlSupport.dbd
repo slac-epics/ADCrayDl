@@ -1,0 +1,2 @@
+registrar("ADCrayDlRegister")
+function(GetCurrentTime)

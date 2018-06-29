@@ -1,0 +1,424 @@
+#=================================================================#
+# Template file: CrayDl.template
+# Database for the records specific to the ADCrayDl module.
+# Domen Soklic, Cosylab
+# May 30, 2018
+
+include "ADBase.template"
+
+# Redefine the color mode choices from ADBase.template to only have those that the CrayDl
+# driver supports.  Keep the same values (xxVL), but change the menu numbers.
+
+record(mbbo, "$(P)$(R)ColorMode")
+{
+    field(ZRST, "Mono")
+    field(ZRVL, "0")
+    field(ONST, "")
+    field(ONVL, "")
+    field(TWST, "")
+    field(TWVL, "")
+    field(THST, "")
+    field(THVL, "")
+    field(FRST, "")
+    field(FVST, "")
+    field(SXST, "")
+    field(SVST, "")
+    field(EIST, "")
+}
+
+record(mbbi, "$(P)$(R)ColorMode_RBV")
+{
+    field(ZRST, "Mono")
+    field(ZRVL, "0")
+    field(ONST, "")
+    field(ONVL, "")
+    field(TWST, "")
+    field(TWVL, "")
+    field(THST, "")
+    field(THVL, "")
+    field(FRST, "")
+    field(FVST, "")
+    field(SXST, "")
+    field(SVST, "")
+    field(EIST, "")
+}
+
+record(mbbo, "$(P)$(R)TriggerMode")
+{
+    field(PINI, "YES")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))TRIGGER_MODE")
+    field(ZRST, "FreeRun")
+    field(ZRVL, "0")
+    field(ONST, "Edge")
+    field(ONVL, "1")
+    field(TWST, "Bulb")
+    field(TWVL, "2")
+    field(THST, "LCLSMode")
+    field(THVL, "3")
+    field(VAL,  "0")
+    info(autosaveFields, "VAL")
+}
+
+record(mbbi, "$(P)$(R)TriggerMode_RBV")
+{
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))TRIGGER_MODE")
+    field(ZRST, "FreeRun")
+    field(ZRVL, "0")
+    field(ONST, "Edge")
+    field(ONVL, "1")
+    field(TWST, "Bulb")
+    field(TWVL, "2")
+    field(THST, "LCLSMode")
+    field(THVL, "3")
+    field(SCAN, "I/O Intr")
+}
+
+record(bo, "$(P)$(R)EnableDetectorQuerying") {
+    field(DTYP, "asynInt32")
+    field(PINI, "YES")
+    field(OUT,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))EnableDetectorQuerying")
+    field(ZNAM, "Disabled")
+    field(ONAM, "Enabled")
+    field(VAL,  "1")
+    info(asyn:READBACK, "1")
+}
+
+record(bi, "$(P)$(R)EnableDetectorQuerying_RBV") {
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))EnableDetectorQuerying")
+    field(ZNAM, "Disabled")
+    field(ONAM, "Enabled")
+    field(SCAN, "I/O Intr")
+}
+
+# New records for ADCrayDl
+
+record(bo, "$(P)$(R)AcquirePedestal") {
+    field(DTYP, "asynInt32")
+    field(OUT, "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))AcquirePedestal")
+    field(ZNAM, "Done")
+    field(ONAM, "Acquire")
+    field(VAL,  "0")
+    info(asyn:READBACK, "1")
+}
+
+record(bi, "$(P)$(R)AcquirePedestal_RBV") {
+    field(DTYP, "asynInt32")
+    field(INP, "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))AcquirePedestal")
+    field(ZNAM, "Done")
+    field(ZSV,  "NO_ALARM")
+    field(ONAM, "Acquiring")
+    field(OSV,  "MINOR")
+    field(SCAN, "I/O Intr")
+}
+
+record(longout, "$(P)$(R)PedestalNumImages")
+{
+    field(PINI, "YES")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))PedestalNumImages")
+    field(VAL,  "1")
+    info(autosaveFields, "VAL")
+}
+
+record(longin, "$(P)$(R)PedestalNumImages_RBV")
+{
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))PedestalNumImages")
+    field(SCAN, "I/O Intr")
+}
+
+record(mbbo, "$(P)$(R)ReadoutMode")
+{
+    field(PINI, "YES")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))Craydl_ReadoutMode")
+    field(ZRST, "Standard")
+    field(ZRVL, "0")
+    field(ONST, "LowNoise")
+    field(ONVL, "1")
+    field(VAL,  "0")
+    info(autosaveFields, "VAL")
+}
+
+record(mbbi, "$(P)$(R)ReadoutMode_RBV")
+{
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))Craydl_ReadoutMode")
+    field(ZRST, "Standard")
+    field(ZRVL, "0")
+    field(ONST, "LowNoise")
+    field(ONVL, "1")
+    field(SCAN, "I/O Intr")
+}
+
+record(bi, "$(P)$(R)ShutterStatus_RBV")
+{
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))ShutterStatus")
+    field(ZNAM, "Closed")
+    field(ONAM, "Open")
+    field(SCAN, "I/O Intr")
+}
+
+record(calc, "$(P)$(R)TrigToTS_Calc")
+{
+    field(INPA, "$(P)$(R)AcquireTime_RBV CP MS")
+    #field(INPB, "$(P)$(R)XmitDelay CP MS") # TODO
+    #field(INPC, "$(P)$(R)DriverProcDelay CP MS") # TODO
+    field(CALC, "A+B+C")
+    field(EGU,  "sec")
+    field(PREC, "5")
+}
+
+# Pedestal records
+
+record(longin, "$(P)$(R)PedestalTimestamp_RBV")
+{
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))PedestalTimestamp")
+    field(SCAN, "Passive")
+    field(EGU,  "s")
+    field(SDIS, "$(P)$(R)IsPedestalTimestampAlarm NPP MS")
+    field(DISV, "-1")
+}
+
+record(sub, "$(P)$(R)NowTS_RBV")
+{
+    field(SCAN, "Passive")
+    field(EGU,  "s")
+    field(SNAM, "GetCurrentTime")
+}
+
+record(calc, "$(P)$(R)IsPedestalTimestampAlarm")
+{
+    field(SCAN, "1 second")
+    field(CALC, "B-A")
+    field(INPA, "$(P)$(R)PedestalTimestamp_RBV PP")
+    field(INPB, "$(P)$(R)NowTS_RBV PP")
+    field(HIHI, "$(MAXAGEPEDESTAL)")
+    field(HHSV, "MAJOR")
+}
+
+# Vacuum records
+
+record(bo, "$(P)$(R)VacuumValve")
+{
+    field(PINI, "YES")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))VacuumValve")
+    field(ZNAM, "Off")
+    field(ONAM, "On")
+    field(VAL,  "0")
+    info(autosaveFields, "VAL")
+    info(asyn:READBACK, "1")
+}
+
+record(bi, "$(P)$(R)VacuumValve_RBV")
+{
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))VacuumValve")
+    field(ZNAM, "Off")
+    field(ONAM, "On")
+    field(SCAN, "I/O Intr")
+}
+
+record(bo, "$(P)$(R)IgnoreVacuumPump")
+{
+    field(PINI, "YES")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))IgnoreVacuumPump")
+    field(ZNAM, "Un-ignore")
+    field(ONAM, "Ignore")
+    field(VAL,  "0")
+    info(autosaveFields, "VAL")
+    info(asyn:READBACK, "1")
+}
+
+record(bi, "$(P)$(R)IgnoreVacuumPump_RBV")
+{
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))IgnoreVacuumPump")
+    field(ZNAM, "Un-ignore")
+    field(ONAM, "Ignore")
+    field(SCAN, "I/O Intr")
+}
+
+record(ai, "$(P)$(R)LinePressure_RBV")
+{
+    field(DTYP, "asynFloat64")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))LinePressure")
+    field(EGU,  "mT")
+    field(SCAN, "I/O Intr")
+}
+
+record(ai, "$(P)$(R)ChamberPressure_RBV")
+{
+    field(DTYP, "asynFloat64")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))ChamberPressure")
+    field(EGU,  "mT")
+    field(SCAN, "I/O Intr")
+}
+
+record(bi, "$(P)$(R)VacuumValveOpen_RBV")
+{
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))VacuumValveOpen")
+    field(ZNAM, "No")
+    field(ONAM, "Yes")
+    field(SCAN, "I/O Intr")
+}
+
+record(bi, "$(P)$(R)VacuumValveEnabled_RBV")
+{
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))VacuumValveEnabled")
+    field(ZNAM, "No")
+    field(ONAM, "Yes")
+    field(SCAN, "I/O Intr")
+}
+
+record(bi, "$(P)$(R)VacuumPumpRunning_RBV")
+{
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))VacuumPumpRunning")
+    field(ZNAM, "No")
+    field(ONAM, "Yes")
+    field(SCAN, "I/O Intr")
+}
+
+record(bi, "$(P)$(R)VacuumPumpIgnored_RBV")
+{
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))VacuumPumpIgnored")
+    field(ZNAM, "No")
+    field(ONAM, "Yes")
+    field(SCAN, "I/O Intr")
+}
+
+# Cooling records
+
+record(bo, "$(P)$(R)Cooler")
+{
+    field(PINI, "YES")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))Cooler")
+    field(ZNAM, "Off")
+    field(ONAM, "On")
+    field(VAL,  "0")
+    info(autosaveFields, "VAL")
+    info(asyn:READBACK, "1")
+}
+
+record(bi, "$(P)$(R)Cooler_RBV")
+{
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))Cooler")
+    field(ZNAM, "Off")
+    field(ONAM, "On")
+    field(SCAN, "I/O Intr")
+}
+
+record(ao, "$(P)$(R)CCDTempSetpoint")
+{
+    field(PINI, "YES")
+    field(DTYP, "asynFloat64")
+    field(OUT,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))CCDTempSetpoint")
+    field(VAL,  "-80.0")
+    field(EGU,  "C")
+    info(autosaveFields, "VAL")
+}
+
+record(ai, "$(P)$(R)CCDTempSetpoint_RBV")
+{
+    field(DTYP, "asynFloat64")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))CCDTempSetpoint")
+    field(EGU,  "C")
+    field(SCAN, "I/O Intr")
+}
+
+record(ao, "$(P)$(R)CoolerTempSetpoint")
+{
+    field(PINI, "YES")
+    field(DTYP, "asynFloat64")
+    field(OUT,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))CoolerTempSetpoint")
+    field(VAL,  "-120.0")
+    field(EGU,  "C")
+    info(autosaveFields, "VAL")
+}
+
+record(ai, "$(P)$(R)CoolerTempSetpoint_RBV")
+{
+    field(DTYP, "asynFloat64")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))CoolerTempSetpoint")
+    field(EGU,  "C")
+    field(SCAN, "I/O Intr")
+}
+
+record(ai, "$(P)$(R)MeanSensorTemp_RBV")
+{
+    field(DTYP, "asynFloat64")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))MeanSensorTemp")
+    field(EGU,  "C")
+    field(SCAN, "I/O Intr")
+}
+
+record(ai, "$(P)$(R)MaxSensorTemp_RBV")
+{
+    field(DTYP, "asynFloat64")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))MaxSensorTemp")
+    field(EGU,  "C")
+    field(SCAN, "I/O Intr")
+}
+
+record(ai, "$(P)$(R)MinSensorTemp_RBV")
+{
+    field(DTYP, "asynFloat64")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))MinSensorTemp")
+    field(EGU,  "C")
+    field(SCAN, "I/O Intr")
+}
+
+record(ai, "$(P)$(R)MeanCoolerTemp_RBV")
+{
+    field(DTYP, "asynFloat64")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))MeanCoolerTemp")
+    field(EGU,  "C")
+    field(SCAN, "I/O Intr")
+}
+
+record(ai, "$(P)$(R)MaxCoolerTemp_RBV")
+{
+    field(DTYP, "asynFloat64")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))MaxCoolerTemp")
+    field(EGU,  "C")
+    field(SCAN, "I/O Intr")
+}
+
+record(ai, "$(P)$(R)MinCoolerTemp_RBV")
+{
+    field(DTYP, "asynFloat64")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))MinCoolerTemp")
+    field(EGU,  "C")
+    field(SCAN, "I/O Intr")
+}
+
+record(bi, "$(P)$(R)CoolerEnabled_RBV")
+{
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))CoolerEnabled")
+    field(ZNAM, "No")
+    field(ONAM, "Yes")
+    field(SCAN, "I/O Intr")
+}
+
+record(bi, "$(P)$(R)CoolerRunning_RBV")
+{
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))CoolerRunning")
+    field(ZNAM, "No")
+    field(ONAM, "Yes")
+    field(SCAN, "I/O Intr")
+}
