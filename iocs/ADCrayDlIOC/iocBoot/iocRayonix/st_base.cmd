@@ -7,6 +7,9 @@ ADCrayDlApp_registerRecordDeviceDriver(pdbbase)
 
 # Prefix for all records
 epicsEnvSet("PREFIX", "13SIM1:")
+
+epicsEnvSet("CAM_PREFIX", "cam1:")
+
 # The port name for the detector
 epicsEnvSet("PORT",   "SIM1")
 # The queue size for all plugins
@@ -24,6 +27,19 @@ epicsEnvSet("MAX_THREADS", "8")
 # The search path for database files
 epicsEnvSet("EPICS_DB_INCLUDE_PATH", "$(ADCORE)/db")
 
+# PV Prefixes
+epicsEnvSet( "IOC_PV",	"IOC:FEE1:441" )
+epicsEnvSet( "EVR_PV",	"EVR:FEE1:441" )
+epicsEnvSet( "TRIG_PV",	"$(EVR_PV):TRIG0" )
+epicsEnvSet( "CAM_PV",	"CAMR:FEE1:441" )
+# Configure EVR
+#epicsEnvSet( "EVR_CARD",	"0" )
+epicsEnvSet( "EVR_CARD",	"0" )
+# EVR Type: 0=VME, 1=PMC, 15=SLAC
+epicsEnvSet( "EVR_TYPE",	"15" )
+
+# < /reg/d/iocCommon/All/pre_linux.cmd
+
 asynSetMinTimerPeriod(0.001)
 
 # The EPICS environment variable EPICS_CA_MAX_ARRAY_BYTES needs to be set to a value at least as large
@@ -38,12 +54,19 @@ asynSetMinTimerPeriod(0.001)
 # Uncomment the following line to set it in the IOC.
 epicsEnvSet("EPICS_CA_MAX_ARRAY_BYTES", "1000000000")
 
+
+# Configure a PMC EVR
+ErConfigure( $(EVR_CARD), 0, 0, 0, $(EVR_TYPE) )
+#dbLoadRecords( "$(EVENT2)/db/evrPmc230.db",			"EVR=EVR:FEE1:441,CARD=$(EVR_CARD),IP0E=Enabled,IP1E=Enabled,IP2E=Enabled" )
+dbLoadRecords( "$(EVENT2)/db/evrSLAC.db",			"EVR=EVR:FEE1:441,CARD=$(EVR_CARD),IP0E=Enabled,IP1E=Enabled,IP2E=Enabled" )
+
+dbLoadRecords("$(ADCRAYDL)/db/ADCrayDl.template","P=$(PREFIX),R=$(CAM_PREFIX),PORT=$(PORT),ADDR=0,TIMEOUT=1,MAXAGEPEDESTAL=10")
 # Create a CrayDl driver
 # CrayDlConfig(const char *portName, int dataType,
 #                   int maxBuffers, int maxMemory, int priority, int stackSize)
 ADCrayDlConfig("$(PORT)", 3, 0, -1)
 
-dbLoadRecords("$(ADCRAYDL)/db/ADCrayDl.template","P=$(PREFIX),R=cam1:,PORT=$(PORT),ADDR=0,TIMEOUT=1,MAXAGEPEDESTAL=10")
+
 
 # Create a standard arrays plugin, set it to get data from first CrayDl driver.
 NDStdArraysConfigure("Image1", 3, 0, "$(PORT)", 0, -1)
@@ -58,10 +81,15 @@ set_requestfile_path("$(ADCRAYDL)/ADCrayDlApp/Db")
 
 iocInit()
 
+ADCrayDlInitTiming("$(EVR_PV):Triggers.A", "$(EVR_PV):Triggers.M", "$(PREFIX)$(CAM_PREFIX)DataDelay.VAL", "$(PREFIX)$(CAM_PREFIX)SyncStatus")
+
 # save things every thirty seconds
 set_savefile_path("./autosave")
 create_monitor_set("auto_settings.req", 30, "P=$(PREFIX)")
 
-dbpf $(PREFIX)cam1:ArrayCallbacks 1
-#dbpf $(PREFIX)cam1:BinX 10
-#dbpf $(PREFIX)cam1:Acquire 1
+dbpf $(PREFIX)$(CAM_PREFIX)ArrayCallbacks 1
+#dbpf $(PREFIX)$(CAM_PREFIX)BinX 10
+#dbpf $(PREFIX)$(CAM_PREFIX)Acquire 1
+
+# All IOCs should dump some common info after initial startup.
+#< /reg/d/iocCommon/All/post_linux.cmd

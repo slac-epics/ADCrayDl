@@ -23,6 +23,7 @@
 
 #include "ADDriver.h"
 #include <epicsExport.h>
+#include <dbAccess.h>
 #include "ADCrayDl.h"
 #include "ADCrayDlRecordNames.h"
 
@@ -45,7 +46,7 @@ void ADCrayDl::pollDetectorStatus(const uint32_t interval_us)
             std::cerr << "Error querying status: " << status.ErrorText() << std::endl;
         }
 
-        std::cout << "polling " << std::endl;
+        // std::cout << "polling " << std::endl;
 
         usleep(interval_us);
     }
@@ -201,19 +202,48 @@ asynStatus ADCrayDl::writeInt32(asynUser *pasynUser, epicsInt32 value)
     {
         m_numImages = value;
     }
-    else if (function == ADBinX || function == ADBinY)
+    else if (function == BinningFunction)
     {
-        const craydl::RxReturnStatus error = m_rayonixDetector->SetBinning(value, value);
+        std::cout << "Setting binning" << std::endl;
+        int binningValue = 1;
+
+        switch (value)
+        {
+            case BinningMode1x1:
+            default:
+                binningValue = 1;
+                break;
+
+            case BinningMode2x2:
+                binningValue = 2;
+                break;
+
+            case BinningMode3x3:
+                binningValue = 3;
+                break;
+            
+            case BinningMode4x4:
+                binningValue = 4;
+                break;
+            
+            case BinningMode6x6:
+                binningValue = 6;
+                break;
+            
+            case BinningMode10x10:
+                binningValue = 10;
+                break;
+        }
+
+        const craydl::RxReturnStatus error = m_rayonixDetector->SetBinning(binningValue, binningValue);
         if (error.IsError())
         {
-            std::cerr << "Binning " << value << "x" << value << " was not allowed: " << error.ErrorText() << std::endl;
+            std::cerr << "Binning " << binningValue << "x" << binningValue << " was not allowed: " << error.ErrorText() << std::endl;
             status = asynError;
         }
         else
         {
             // All ok
-            setIntegerParam(ADBinX, value);
-            status = setIntegerParam(ADBinY, value);
             updateDimensionSize();
         }
     }
@@ -555,6 +585,18 @@ int ADCrayDl::updateDimensionSize()
     return status;
 }
 
+static DBADDR getPVAddr(const char *evName)
+{
+    DBADDR addr;
+
+    if (dbNameToAddr(evName, &addr))
+    {
+        printf("No PV named %s!!!\n", evName);
+    }
+
+    return addr;
+}
+
 /** Constructor
   * \param[in] portName The name of the asyn port driver to be created.
   * \param[in] dataType The initial data type (NDDataType_t) of the images that this driver will create.
@@ -587,6 +629,7 @@ ADCrayDl::ADCrayDl(const char *portName, NDDataType_t dataType,
     createParam(PEDESTAL_NUM_IMG_STR,         asynParamInt32, &PedestalNumImagesFunction);
     createParam(PEDESTAL_TIMESTAMP_STR,       asynParamInt32, &PedestalTimestampFunction);
     createParam(ENABLE_DETECTOR_QUERYING_STR, asynParamInt32, &EnableDetectorQueryingFunction);
+    createParam(BINNING_STR,                  asynParamInt32, &BinningFunction);
 
     // Cooling
     createParam(COOLER_STR,               asynParamInt32,   &CoolerFunction);
@@ -671,10 +714,6 @@ ADCrayDl::ADCrayDl(const char *portName, NDDataType_t dataType,
         return;
     }
 
-    // Create thread that takes care of frame timestamping.
-    // TODO
-    //m_timestampingThread = std::thread(&FrameSyncObject::poll, &m_frameSyncObject);
-
     if (status)
     {
         printf("%s:%s epicsThreadCreate failure for image task\n",
@@ -693,7 +732,7 @@ ADCrayDl::~ADCrayDl()
     }
 
     // Close connection to the detector
-   m_rayonixDetector->Close();
+    m_rayonixDetector->Close();
 }
 
 /** Configuration command, called directly or from iocsh */
@@ -727,10 +766,35 @@ static void configADCrayDlCallFunc(const iocshArgBuf *args)
                       args[4].ival, args[5].ival);
 }
 
+static void ADCrayDlInitTiming(const iocshArgBuf *args)
+{
+    // Create thread that takes care of frame timestamping.
+    static FrameSyncObject frameSyncObject;
+
+    // FIXME get these PV names from st.cmd
+    frameSyncObject.SetParams((epicsUInt32 *)(getPVAddr(args[0].sval).pfield),
+                              (epicsUInt32 *)(getPVAddr(args[1].sval).pfield),
+                              (double *)(getPVAddr(args[2].sval).pfield),
+                              args[3].sval);
+
+    static std::thread timestampingThread(&FrameSyncObject::poll, &frameSyncObject);
+    timestampingThread.detach();
+}
+
+static const iocshArg ADCrayDlInitTimingArg0 = {"Trigger event PV", iocshArgString};
+static const iocshArg ADCrayDlInitTimingArg1 = {"Generation counter PV", iocshArgString};
+static const iocshArg ADCrayDlInitTimingArg2 = {"Delay estimate PV", iocshArgString};
+static const iocshArg ADCrayDlInitTimingArg3 = {"Sync status PV", iocshArgString};
+static const iocshArg * const ADCrayDlInitTimingArgs[] = {&ADCrayDlInitTimingArg0,
+                                                          &ADCrayDlInitTimingArg1,
+                                                          &ADCrayDlInitTimingArg2,
+                                                          &ADCrayDlInitTimingArg3};
+static const iocshFuncDef initTimingADCrayDl = {"ADCrayDlInitTiming", 4, ADCrayDlInitTimingArgs};
 
 static void ADCrayDlRegister(void)
 {
     iocshRegister(&configADCrayDl, configADCrayDlCallFunc);
+    iocshRegister(&initTimingADCrayDl, ADCrayDlInitTiming);
 }
 
 static int GetCurrentTime(subRecord *precord)
@@ -743,6 +807,7 @@ static int GetCurrentTime(subRecord *precord)
 extern "C"
 {
 epicsExportRegistrar(ADCrayDlRegister);
+epicsExportRegistrar(ADCrayDlInitTiming);
 epicsRegisterFunction(GetCurrentTime);
 }
 

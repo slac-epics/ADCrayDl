@@ -13,6 +13,7 @@ static const char *PEDESTAL_NUM_IMG_STR         = "PedestalNumImages";
 static const char *PEDESTAL_TIMESTAMP_STR       = "PedestalTimestamp";
 static const char *SHUTTER_STATUS_STR           = "ShutterStatus";
 static const char *ENABLE_DETECTOR_QUERYING_STR = "EnableDetectorQuerying";
+static const char *BINNING_STR                  = "Binning";
 
 /*
  * Cooling records.

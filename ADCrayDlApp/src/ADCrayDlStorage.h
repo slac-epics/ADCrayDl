@@ -27,16 +27,7 @@ public:
      */
     virtual ~Storage() = default;
 
-    /**
-     * @brief Get the data access mutex.
-     * 
-     * @return Referene to data access mutex
-     */
-    static epicsMutex &getMutex();
-
-private:
-    static epicsMutex m_mutex; //!< Data access mutex.
-    static ThreadedQueue<NDArray *> m_frameQueue; //!< Queue contining un-timestamped acquired frames.
+    static ThreadedQueue<NDArray *> frameQueue; //!< Queue contining un-timestamped acquired frames.
 };
 
 } // namespace adcraydl

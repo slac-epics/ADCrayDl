@@ -5,12 +5,6 @@
 namespace adcraydl
 {
 
-epicsMutex Storage::m_mutex;
-ThreadedQueue<NDArray *> Storage::m_frameQueue;
-
-epicsMutex &Storage::getMutex()
-{
-    return m_mutex;
-}
+ThreadedQueue<NDArray *> Storage::frameQueue;
 
 } // namespace adcraydl

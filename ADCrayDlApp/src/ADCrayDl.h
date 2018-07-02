@@ -146,6 +146,16 @@ private:
         ReadoutModeLowNoise = 1
     };
 
+    enum BinningMode
+    {
+        BinningMode1x1   = 0,
+        BinningMode2x2   = 1,
+        BinningMode3x3   = 2,
+        BinningMode4x4   = 3,
+        BinningMode6x6   = 4,
+        BinningMode10x10 = 5
+    };
+
     /**
      * @brief Task that polls detector for current status.
      * 
@@ -206,10 +216,6 @@ private:
     AtomicBool m_running;        //!< Flag that indicates if the polling thread should keep running or stop.
     std::thread m_pollingThread; //!< Thread that polls the detector.
 
-    // Timestamping thread
-    FrameSyncObject m_frameSyncObject;
-    std::thread m_timestampingThread;
-
     // Custom parameters
     int AcquirePedestalFunction;
     int ReadoutModeFunction;
@@ -217,6 +223,7 @@ private:
     int PedestalTimestampFunction;
     int IntervalTimeFunction;
     int EnableDetectorQueryingFunction;
+    int BinningFunction;
 
     // Cooling
     int CoolerFunction;
