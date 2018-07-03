@@ -28,10 +28,9 @@ epicsEnvSet("MAX_THREADS", "8")
 epicsEnvSet("EPICS_DB_INCLUDE_PATH", "$(ADCORE)/db")
 
 # PV Prefixes
-epicsEnvSet( "IOC_PV",	"IOC:FEE1:441" )
-epicsEnvSet( "EVR_PV",	"EVR:FEE1:441" )
+epicsEnvSet( "IOC_PV",	"IOC:TSTRAYONIX:123" )
+epicsEnvSet( "EVR_PV",	"EVR:TSTRAYONIX:123" )
 epicsEnvSet( "TRIG_PV",	"$(EVR_PV):TRIG0" )
-epicsEnvSet( "CAM_PV",	"CAMR:FEE1:441" )
 # Configure EVR
 #epicsEnvSet( "EVR_CARD",	"0" )
 epicsEnvSet( "EVR_CARD",	"0" )
@@ -57,8 +56,7 @@ epicsEnvSet("EPICS_CA_MAX_ARRAY_BYTES", "1000000000")
 
 # Configure a PMC EVR
 ErConfigure( $(EVR_CARD), 0, 0, 0, $(EVR_TYPE) )
-#dbLoadRecords( "$(EVENT2)/db/evrPmc230.db",			"EVR=EVR:FEE1:441,CARD=$(EVR_CARD),IP0E=Enabled,IP1E=Enabled,IP2E=Enabled" )
-dbLoadRecords( "$(EVENT2)/db/evrSLAC.db",			"EVR=EVR:FEE1:441,CARD=$(EVR_CARD),IP0E=Enabled,IP1E=Enabled,IP2E=Enabled" )
+dbLoadRecords("$(EVENT2)/db/evrSLAC.db", "EVR=$(EVR_PV),CARD=$(EVR_CARD),IP0E=Enabled,IP1E=Enabled,IP2E=Enabled")
 
 dbLoadRecords("$(ADCRAYDL)/db/ADCrayDl.template","P=$(PREFIX),R=$(CAM_PREFIX),PORT=$(PORT),ADDR=0,TIMEOUT=1,MAXAGEPEDESTAL=10")
 # Create a CrayDl driver
@@ -66,7 +64,7 @@ dbLoadRecords("$(ADCRAYDL)/db/ADCrayDl.template","P=$(PREFIX),R=$(CAM_PREFIX),PO
 #                   int maxBuffers, int maxMemory, int priority, int stackSize)
 ADCrayDlConfig("$(PORT)", 3, 0, -1)
 
-
+syncdebug(2)
 
 # Create a standard arrays plugin, set it to get data from first CrayDl driver.
 NDStdArraysConfigure("Image1", 3, 0, "$(PORT)", 0, -1)

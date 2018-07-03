@@ -28,6 +28,7 @@ public:
     virtual ~Storage() = default;
 
     static ThreadedQueue<NDArray *> frameQueue; //!< Queue contining un-timestamped acquired frames.
+    static ThreadedQueue<NDArray *> timestampedFrameQueue; //!< Queue containing timestamped frames.
 };
 
 } // namespace adcraydl

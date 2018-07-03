@@ -26,6 +26,7 @@ $(PROD_NAME)_DBD += ADCrayDlSupport.dbd
 # $(PROD_NAME)_DBD += diagTimer.dbd
 $(PROD_NAME)_DBD += evrSupport.dbd
 $(PROD_NAME)_DBD += devMrfEr.dbd
+$(PROD_NAME)_DBD += timesync.dbd
 # $(PROD_NAME)_DBD += timeStampFifo.dbd
 
 # <name>_registerRecordDeviceDriver.cpp will be created from <name>.dbd

@@ -144,9 +144,12 @@ record(ao, "$(P)$(R)DataDelay")
     info(autosaveFields, "VAL")
 }
 
-record(longin, "$(P)$(R)SyncStatus")
+record(bi, "$(P)$(R)SyncStatus")
 {
-    field(DTYP, "asynInt32")
+    field(DESC, "Timestamp Synchronization")
+    field(ZNAM, "Out of Sync")
+    field(ONAM, "Synchronized")
+    field(VAL, "0")
 }
 
 record(bo, "$(P)$(R)AcquirePedestal") {

@@ -184,10 +184,6 @@ asynStatus ADCrayDl::writeInt32(asynUser *pasynUser, epicsInt32 value)
         {
             // TODO error handling
 
-            // FIXME remove this, just for testing
-            // Setup some data collection parameters
-            std::cout << "Frame is now " << m_rayonixDetector->FastLength() << "x" << m_rayonixDetector->SlowLength() << " pixels." << std::endl;
-
             m_rayonixDetector->SetupAcquisitionSequence(m_numImages, 1);
             m_rayonixDetector->SendParameters();
 
@@ -523,39 +519,18 @@ void ADCrayDl::FrameError(int frame_number, const craydl::RxFrame *frame_p, int 
 
 void ADCrayDl::applyFrameToAD(const craydl::RxFrame *frame_p)
 {
-    if (pArrays[0]) // FIXME: This will go away when timestamping is introduced.
-    {
-        pArrays[0]->release();
-    }
+    NDArray *inArray = pNDArrayPool->alloc(NUM_DIMS, m_dims, NDUInt16, frame_p->getSize(), NULL);
 
-    NDArray *inArray = pNDArrayPool->alloc(NUM_DIMS, m_dims, NDUInt16, frame_p->getSize(), frame_p->getBufferAddress());
     for (size_t i = 0; i < NUM_DIMS; i++)
     {
         inArray->initDimension(&m_dimsOut[i], m_dims[i]);
     }
 
-    const int status = pNDArrayPool->convert(inArray,
-                                             pArrays,
-                                             NDUInt16,
-                                             m_dimsOut);  // FIXME: This will go away when timestamping is introduced.
+    // The dimensions are the same and the data type is the same, then just copy the input image to the output image.
+    memcpy(inArray->pData, frame_p->getBufferAddress(), frame_p->getSize());
 
-    inArray->release();
-
-    if (status != 0)
-    {
-        std::cerr << "Error converting" << std::endl;
-        return;
-    }
-
-    callParamCallbacks();
-
-    int arrayCallbacks;
-    getIntegerParam(NDArrayCallbacks, &arrayCallbacks);
-    if (arrayCallbacks != 0)
-    {
-        std::cout << "Calling image data callback" << std::endl;
-        doCallbacksGenericPointer(pArrays[0], NDArrayData, 0);
-    }
+    // Put this frame in the frame queue.
+    m_storage.frameQueue.push(inArray);
 }
 
 int ADCrayDl::updateDimensionSize()
@@ -771,10 +746,9 @@ static void ADCrayDlInitTiming(const iocshArgBuf *args)
     // Create thread that takes care of frame timestamping.
     static FrameSyncObject frameSyncObject;
 
-    // FIXME get these PV names from st.cmd
-    frameSyncObject.SetParams((epicsUInt32 *)(getPVAddr(args[0].sval).pfield),
-                              (epicsUInt32 *)(getPVAddr(args[1].sval).pfield),
-                              (double *)(getPVAddr(args[2].sval).pfield),
+    frameSyncObject.SetParams(static_cast<epicsUInt32 *>(getPVAddr(args[0].sval).pfield),
+                              static_cast<epicsUInt32 *>(getPVAddr(args[1].sval).pfield),
+                              static_cast<double *>(getPVAddr(args[2].sval).pfield),
                               args[3].sval);
 
     static std::thread timestampingThread(&FrameSyncObject::poll, &frameSyncObject);
