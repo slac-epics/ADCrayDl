@@ -20,14 +20,10 @@ include $(ADCORE)/ADApp/commonDriverMakefile
 
 $(PROD_NAME)_DBD += ADCrayDlSupport.dbd
 
-# $(PROD_NAME)_DBD += erRecord.dbd
-# $(PROD_NAME)_DBD += ereventRecord.dbd
-# $(PROD_NAME)_DBD += evrIoc.dbd
-# $(PROD_NAME)_DBD += diagTimer.dbd
 $(PROD_NAME)_DBD += evrSupport.dbd
 $(PROD_NAME)_DBD += devMrfEr.dbd
 $(PROD_NAME)_DBD += timesync.dbd
-# $(PROD_NAME)_DBD += timeStampFifo.dbd
+$(PROD_NAME)_DBD += diagTimer.dbd
 
 # <name>_registerRecordDeviceDriver.cpp will be created from <name>.dbd
 PROD_SRCS_DEFAULT += $(PROD_NAME)_registerRecordDeviceDriver.cpp $(PROD_NAME)Main.cpp
@@ -40,14 +36,19 @@ PROD_SYS_LIBS += craydl
 PROD_DEPLIB_DIRS += $(RAYONIX_LIB)
 
 # FIXME change paths to use variables
-PROD_DEPLIB_DIRS += /reg/g/pcds/epics/R3.15.5-2.0/modules/timesync/R1.1.10/lib/linux-x86_64
+PROD_DEPLIB_DIRS += $(AUTOSAVE)/lib/linux-x86_64
+
+PROD_DEPLIB_DIRS += $(TIMESYNC)/lib/linux-x86_64
 PROD_SYS_LIBS += timesync
 
-PROD_DEPLIB_DIRS += /reg/g/pcds/epics/R3.15.5-2.0/modules/event2/R4.2.4/lib/linux-x86_64
+PROD_DEPLIB_DIRS += $(EVENT2)/lib/linux-x86_64
 PROD_SYS_LIBS += devMrfEr
 PROD_SYS_LIBS += drvMrf
 PROD_SYS_LIBS += evrSupport
 PROD_SYS_LIBS += mrfApi
+
+PROD_DEPLIB_DIRS += $(DIAG_TIMER)/lib/linux-x86_64
+PROD_SYS_LIBS += diagTimer
 
 
 #=============================

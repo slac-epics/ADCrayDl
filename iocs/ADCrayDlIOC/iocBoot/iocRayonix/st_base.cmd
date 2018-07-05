@@ -55,6 +55,7 @@ epicsEnvSet("EPICS_CA_MAX_ARRAY_BYTES", "1000000000")
 
 
 # Configure a PMC EVR
+# ErDebugLevel( 99 )
 ErConfigure( $(EVR_CARD), 0, 0, 0, $(EVR_TYPE) )
 dbLoadRecords("$(EVENT2)/db/evrSLAC.db", "EVR=$(EVR_PV),CARD=$(EVR_CARD),IP0E=Enabled,IP1E=Enabled,IP2E=Enabled")
 
@@ -73,8 +74,16 @@ NDStdArraysConfigure("Image1", 3, 0, "$(PORT)", 0, -1)
 # This waveform allows transporting 16-bit images
 dbLoadRecords("NDStdArrays.template", "P=$(PREFIX),R=image1:,PORT=Image1,ADDR=0,TIMEOUT=1,NDARRAY_PORT=$(PORT),DATATYPE=3,TYPE=Int16,FTVL=USHORT,NELEMENTS=58982400,ENABLED=1")
 
-# Load all other plugins using commonPlugins.cmd
-< $(ADCORE)/iocBoot/commonPlugins.cmd
+# Set up autosave
+set_requestfile_path("./")
+set_requestfile_path("$(ADCORE)/ADApp/Db")
+set_requestfile_path("$(ADCORE)/iocBoot")
+set_savefile_path("./autosave")
+set_pass0_restoreFile("auto_settings.sav")
+set_pass1_restoreFile("auto_settings.sav")
+save_restoreSet_status_prefix("$(PREFIX)")
+dbLoadRecords("$(AUTOSAVE)/asApp/Db/save_restoreStatus.db", "P=$(PREFIX)")
+
 set_requestfile_path("$(ADCRAYDL)/ADCrayDlApp/Db")
 
 iocInit()
@@ -83,10 +92,10 @@ ADCrayDlInitTiming("$(EVR_PV):Triggers.A", "$(EVR_PV):Triggers.M", "$(PREFIX)$(C
 
 # save things every thirty seconds
 set_savefile_path("./autosave")
-create_monitor_set("auto_settings.req", 30, "P=$(PREFIX)")
+create_monitor_set("auto_settings.req", 10, "P=$(PREFIX),IOC=$(PREFIX)$(CAM_PREFIX)")
 
 dbpf $(PREFIX)$(CAM_PREFIX)ArrayCallbacks 1
-#dbpf $(PREFIX)$(CAM_PREFIX)BinX 10
+# dbpf $(PREFIX)$(CAM_PREFIX)Bin 10x10
 #dbpf $(PREFIX)$(CAM_PREFIX)Acquire 1
 
 # All IOCs should dump some common info after initial startup.

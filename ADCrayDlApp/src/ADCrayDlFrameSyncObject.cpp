@@ -1,12 +1,17 @@
 #include "ADCrayDlFrameSyncObject.h"
 #include <iostream>
 
+namespace
+{
+    static const double FIDUCIAL_RATE = 360.0;
+}
+
 namespace adcraydl
 {
 
 FrameSyncObject::FrameSyncObject()
     : SyncObject(),
-      m_previousTimestamp(boost::posix_time::second_clock::local_time())
+      m_previousTimestamp({0,0})
 {
 }
 
@@ -14,10 +19,13 @@ DataObject *FrameSyncObject::Acquire(void)
 {
     std::cout << "--- Called acquire" << std::endl;
 
-    NDArray *frame = NULL;
+    NDArray *frame;
     m_storage.frameQueue.blockingPop(frame);
 
     std::cout << "Popped value" << std::endl;
+
+    // TODO FIXME remove this, this is just for development
+    m_storage.timestampedFrameQueue.push(frame);
 
     return new DataObject(frame);
 }
@@ -32,7 +40,13 @@ int FrameSyncObject::FidDiff(DataObject *dobj)
         return -1;
     }
 
-    return 4; // TODO return a real value
+    NDArray *frame = static_cast<NDArray *>(dobj->data);
+
+    // frame->epicsTS contains the hardware timestamp from the acquired frame.
+    const double timeDiffS = epicsTimeDiffInSeconds(&frame->epicsTS, &m_previousTimestamp);
+    m_previousTimestamp = frame->epicsTS;
+
+    return round(timeDiffS / FIDUCIAL_RATE);
 }
 
 int FrameSyncObject::Attributes(void)
@@ -42,7 +56,6 @@ int FrameSyncObject::Attributes(void)
 
 int FrameSyncObject::CheckError(DataObject *dobj)
 {
-    std::cout << "CheckError" << std::endl;
     return 0;
 }
 
@@ -61,17 +74,8 @@ void FrameSyncObject::QueueData(DataObject *dobj, epicsTimeStamp &evtTime)
     // Set timestamp of frame.
     frame->epicsTS = evtTime;
 
-    // Call callbacks.
-    // int arrayCallbacks;
-    // getIntegerParam(NDArrayCallbacks, &arrayCallbacks);
-    // if (arrayCallbacks != 0)
-    // {
-    //     std::cout << "Calling image data callback" << std::endl;
-    //     doCallbacksGenericPointer(frame, NDArrayData, 0);
-    // }
-
-    // The module is done with the frame.
-    frame->release();
+    // Tell the main class that it should publish the data.
+    m_storage.timestampedFrameQueue.push(frame);
 }
 
 } // namespace adcraydl

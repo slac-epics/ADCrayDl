@@ -31,6 +31,7 @@ namespace
 {
     static const char *DRIVER_NAME = "ADCrayDl";
     static const useconds_t POLLING_INTERVAL_US = 1e6; // 1 second
+    static const boost::posix_time::ptime EPOCH(boost::gregorian::date(1970, 1, 1));
 }
 
 namespace adcraydl
@@ -79,6 +80,11 @@ bool ADCrayDl::handleCoolingPV(const int function, const epicsInt32 value, asynS
             std::cerr << "Error " << command << " cooler: " << error.ErrorText() << std::endl;
 
             status = asynError;
+        }
+        else
+        {
+            const std::string command = (value == 0) ? "disabled" : "enabled";
+            std::cout << "!!!! Successfully " << command << " cooler" << std::endl;
         }
 
         return true;
@@ -458,8 +464,7 @@ static time_t toUnixTimestamp(const boost::posix_time::ptime &pt)
 {
     using namespace boost::posix_time;
 
-    static ptime epoch(boost::gregorian::date(1970, 1, 1));
-    time_duration diff(pt - epoch);
+    time_duration diff(pt - EPOCH);
     const time_t localTime = (diff.ticks() / diff.ticks_per_second());
 
     std::tm local_field = *std::gmtime(&localTime);
@@ -519,6 +524,8 @@ void ADCrayDl::FrameError(int frame_number, const craydl::RxFrame *frame_p, int 
 
 void ADCrayDl::applyFrameToAD(const craydl::RxFrame *frame_p)
 {
+    using namespace boost::posix_time;
+
     NDArray *inArray = pNDArrayPool->alloc(NUM_DIMS, m_dims, NDUInt16, frame_p->getSize(), NULL);
 
     for (size_t i = 0; i < NUM_DIMS; i++)
@@ -528,6 +535,15 @@ void ADCrayDl::applyFrameToAD(const craydl::RxFrame *frame_p)
 
     // The dimensions are the same and the data type is the same, then just copy the input image to the output image.
     memcpy(inArray->pData, frame_p->getBufferAddress(), frame_p->getSize());
+
+    // Set the frame's hardware timestamp on the frame. This timestamp will be used later to calculate the FidDiff.
+    ptime t = frame_p->metaData().HardwareTimestamp(); 
+    time_duration diff(t - EPOCH);
+
+    epicsTimeStamp ts;
+    ts.secPastEpoch = diff.total_seconds();
+    ts.nsec = diff.total_nanoseconds() - (diff.total_seconds() * 1e9);
+    inArray->epicsTS = ts;
 
     // Put this frame in the frame queue.
     m_storage.frameQueue.push(inArray);
@@ -558,6 +574,27 @@ int ADCrayDl::updateDimensionSize()
     status |= setIntegerParam(NDArraySize, pixelsX * pixelsY * pixelsZ);
 
     return status;
+}
+
+void ADCrayDl::publishingTask()
+{
+    while (m_publishingRunning.get())
+    {
+        NDArray *frame;
+        m_storage.timestampedFrameQueue.blockingPop(frame);
+
+        // Call callbacks.
+        int arrayCallbacks;
+        getIntegerParam(NDArrayCallbacks, &arrayCallbacks);
+        if (arrayCallbacks != 0)
+        {
+            std::cout << "Calling image data callback" << std::endl;
+            doCallbacksGenericPointer(frame, NDArrayData, 0);
+        }
+
+        // The module is done with the frame.
+        frame->release();
+    }
 }
 
 static DBADDR getPVAddr(const char *evName)
@@ -591,6 +628,7 @@ ADCrayDl::ADCrayDl(const char *portName, NDDataType_t dataType,
                priority, stackSize),
        m_rayonixDetector(craydl::RxDetector::create()),
        m_running(false),
+       m_publishingRunning(false),
        m_numImages(1),
        m_numPedestals(1)
 {
@@ -695,15 +733,24 @@ ADCrayDl::ADCrayDl(const char *portName, NDDataType_t dataType,
             DRIVER_NAME, functionName);
         return;
     }
+
+    // We need a thread that will wait for the timestamped frames.
+    m_publishingRunning = true;
+    m_publishingThread = std::thread(&ADCrayDl::publishingTask, this);
 }
 
 ADCrayDl::~ADCrayDl()
 {
     m_running = false;
-
     if (m_pollingThread.joinable())
     {
         m_pollingThread.join();
+    }
+
+    m_publishingRunning = false;
+    if (m_publishingThread.joinable())
+    {
+        m_publishingThread.join(); // TODO the queue may be blocking while waiting for new elements.
     }
 
     // Close connection to the detector
