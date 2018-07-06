@@ -105,14 +105,6 @@ public:
      */
     virtual asynStatus writeFloat64(asynUser *pasynUser, epicsFloat64 value);
 
-    /**
-     * @brief Task that takes care of the timestamping.
-     * 
-     * This task is started in a new thread. Should be private, but gets called from C, so must be public
-     * @todo
-     */
-    void simTask();
-
     virtual void RawStatusChanged(const std::string &name, const std::string &value);
     virtual void ParameterChanged(const std::string &name, const std::string &value);
 
@@ -206,6 +198,8 @@ private:
      * @return             True when function was handled by this method, false when not.
      */
     bool handleVacuumPV(const int function, const epicsInt32 value, asynStatus &status);
+
+    void increaseArrayCounter();
 
     void publishingTask();
 

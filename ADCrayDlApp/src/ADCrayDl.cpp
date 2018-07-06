@@ -53,13 +53,6 @@ void ADCrayDl::pollDetectorStatus(const uint32_t interval_us)
     }
 }
 
-/** This thread calls computeImage to compute new image data and does the callbacks to send it to higher layers.
-  * It implements the logic for single, multiple or continuous acquisition. */
-void ADCrayDl::simTask()
-{
-
-}
-
 bool ADCrayDl::handleCoolingPV(const int function, const epicsInt32 value, asynStatus &status)
 {
     if (function == CoolerFunction)
@@ -576,12 +569,24 @@ int ADCrayDl::updateDimensionSize()
     return status;
 }
 
+void ADCrayDl::increaseArrayCounter()
+{
+    int arrayCounter;
+    getIntegerParam(NDArrayCounter, &arrayCounter);
+
+    ++arrayCounter;
+
+    setIntegerParam(NDArrayCounter, arrayCounter);
+}
+
 void ADCrayDl::publishingTask()
 {
     while (m_publishingRunning.get())
     {
         NDArray *frame;
         m_storage.timestampedFrameQueue.blockingPop(frame);
+
+        increaseArrayCounter();
 
         // Call callbacks.
         int arrayCallbacks;
