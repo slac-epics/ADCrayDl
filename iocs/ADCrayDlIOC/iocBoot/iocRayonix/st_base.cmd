@@ -68,11 +68,11 @@ ADCrayDlConfig("$(PORT)", 3, 0, -1)
 syncdebug(2)
 
 # Create a standard arrays plugin, set it to get data from first CrayDl driver.
-NDStdArraysConfigure("Image1", 3, 0, "$(PORT)", 0, -1)
+NDStdArraysConfigure("Image2", 3, 0, "$(PORT)", 0, -1)
 
 # This creates a waveform large enough for 7680x7680 arrays.
 # This waveform allows transporting 16-bit images
-dbLoadRecords("NDStdArrays.template", "P=$(PREFIX),R=image1:,PORT=Image1,ADDR=0,TIMEOUT=1,NDARRAY_PORT=$(PORT),DATATYPE=3,TYPE=Int16,FTVL=USHORT,NELEMENTS=58982400,ENABLED=1")
+dbLoadRecords("NDStdArrays.template", "P=$(PREFIX)$(CAM_PREFIX),R=IMAGE2:,PORT=Image2,ADDR=0,TIMEOUT=1,NDARRAY_PORT=$(PORT),DATATYPE=3,TYPE=Int16,FTVL=USHORT,NELEMENTS=58982400,ENABLED=1")
 
 # Set up autosave
 set_requestfile_path("./")
