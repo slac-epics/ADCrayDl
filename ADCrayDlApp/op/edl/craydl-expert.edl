@@ -3,10 +3,10 @@ beginScreenProperties
 major 4
 minor 0
 release 1
-x 2196
-y 870
+x 2200
+y 922
 w 840
-h 980
+h 720
 font "helvetica-medium-r-12.0"
 ctlFont "helvetica-medium-r-12.0"
 btnFont "helvetica-medium-r-12.0"
@@ -34,7 +34,7 @@ release 0
 x 416
 y 56
 w 400
-h 308
+h 188
 lineColor index 3
 fill
 fillColor index 3
@@ -49,7 +49,7 @@ release 0
 x 4
 y 148
 w 400
-h 304
+h 364
 lineColor index 3
 fill
 fillColor index 3
@@ -575,148 +575,14 @@ propagateMacros {
 }
 endObjectProperties
 
-# (Rectangle)
-object activeRectangleClass
-beginObjectProperties
-major 4
-minor 0
-release 0
-x 4
-y 700
-w 400
-h 240
-lineColor index 3
-fill
-fillColor index 3
-endObjectProperties
-
-# (Static Text)
-object activeXTextClass
-beginObjectProperties
-major 4
-minor 1
-release 0
-x 4
-y 688
-w 160
-h 24
-font "helvetica-bold-r-12.0"
-fontAlign "center"
-fgColor index 14
-bgColor index 3
-value {
-  "ViewerStream: IMAGE1"
-}
-endObjectProperties
-
-# (Embedded Window)
-object activePipClass
-beginObjectProperties
-major 4
-minor 1
-release 0
-x 8
-y 708
-w 392
-h 228
-fgColor index 14
-bgColor index 0
-topShadowColor index 1
-botShadowColor index 14
-displaySource "menu"
-filePv "LOC\\\\emb-trig=0"
-sizeOfs 5
-numDsps 1
-displayFileName {
-  0 "ADStreamScreens/emb-stream-sts.edl"
-}
-menuLabel {
-  0 "Embedded Image Status"
-}
-symbols {
-  0 "P=$(P)$(R)IMAGE1,R=:,IMAGE=IMAGE1,CAM=$(CAM),HUTCH=$(HUTCH),IOC=$(IOC),EVR=$(EVR)"
-}
-replaceSymbols {
-  0 1
-}
-noScroll
-endObjectProperties
-
-# (Rectangle)
-object activeRectangleClass
-beginObjectProperties
-major 4
-minor 0
-release 0
-x 416
-y 700
-w 400
-h 240
-lineColor index 3
-fill
-fillColor index 3
-endObjectProperties
-
-# (Static Text)
-object activeXTextClass
-beginObjectProperties
-major 4
-minor 1
-release 0
-x 416
-y 688
-w 168
-h 24
-font "helvetica-bold-r-12.0"
-fontAlign "center"
-fgColor index 14
-bgColor index 3
-value {
-  "ViewerStream: IMAGE2"
-}
-endObjectProperties
-
-# (Embedded Window)
-object activePipClass
-beginObjectProperties
-major 4
-minor 1
-release 0
-x 420
-y 708
-w 392
-h 228
-fgColor index 14
-bgColor index 0
-topShadowColor index 1
-botShadowColor index 14
-displaySource "menu"
-filePv "LOC\\\\emb-trig=0"
-sizeOfs 5
-numDsps 1
-displayFileName {
-  0 "ADStreamScreens/emb-stream-sts.edl"
-}
-menuLabel {
-  0 "Embedded Image Status"
-}
-symbols {
-  0 "P=$(P)$(R)IMAGE2,R=:,IMAGE=IMAGE2,CAM=$(CAM),HUTCH=$(HUTCH),IOC=$(IOC),EVR=$(EVR)"
-}
-replaceSymbols {
-  0 1
-}
-noScroll
-endObjectProperties
-
 # (Text Monitor)
 object activeXTextDspClass:noedit
 beginObjectProperties
 major 4
 minor 5
 release 0
-x 580
-y 944
+x 600
+y 692
 w 188
 h 20
 controlPv "$(IOC):TOD"
@@ -810,7 +676,7 @@ major 4
 minor 1
 release 0
 x 488
-y 180
+y 152
 w 140
 h 20
 font "helvetica-medium-r-12.0"
@@ -856,7 +722,7 @@ major 4
 minor 5
 release 0
 x 712
-y 180
+y 152
 w 88
 h 20
 controlPv "$(P)$(R)AcquirePeriod_RBV"
@@ -882,7 +748,7 @@ major 4
 minor 0
 release 0
 x 584
-y 152
+y 124
 w 120
 h 20
 fgColor index 25
@@ -902,7 +768,7 @@ major 4
 minor 1
 release 0
 x 488
-y 152
+y 124
 w 88
 h 20
 font "helvetica-medium-r-12.0"
@@ -922,7 +788,7 @@ major 4
 minor 5
 release 0
 x 712
-y 152
+y 124
 w 88
 h 20
 controlPv "$(P)$(R)TriggerMode_RBV"
@@ -947,7 +813,7 @@ major 4
 minor 1
 release 0
 x 488
-y 128
+y 100
 w 140
 h 20
 font "helvetica-medium-r-12.0"
@@ -967,7 +833,7 @@ major 4
 minor 5
 release 0
 x 712
-y 128
+y 100
 w 88
 h 20
 controlPv "$(P)$(R)NumImages_RBV"
@@ -992,7 +858,7 @@ major 4
 minor 5
 release 0
 x 644
-y 128
+y 100
 w 60
 h 18
 controlPv "$(P)$(R)NumImages"
@@ -1013,140 +879,6 @@ objType "controls"
 noExecuteClipMask
 endObjectProperties
 
-# (Group)
-object activeGroupClass
-beginObjectProperties
-major 4
-minor 0
-release 0
-x 488
-y 100
-w 216
-h 20
-
-beginGroup
-
-# (Text Control)
-object activeXTextDspClass
-beginObjectProperties
-major 4
-minor 5
-release 0
-x 644
-y 100
-w 60
-h 20
-controlPv "$(P)$(R)Gain"
-format "decimal"
-font "helvetica-medium-r-12.0"
-fgColor index 25
-fgAlarm
-bgColor index 5
-editable
-motifWidget
-nullColor index 40
-smartRefresh
-fastUpdate
-useHexPrefix
-newPos
-objType "controls"
-noExecuteClipMask
-endObjectProperties
-
-# (Static Text)
-object activeXTextClass
-beginObjectProperties
-major 4
-minor 1
-release 0
-x 600
-y 100
-w 32
-h 20
-font "helvetica-medium-r-12.0"
-fontAlign "right"
-fgColor index 14
-bgColor index 0
-useDisplayBg
-value {
-  "Gain"
-}
-endObjectProperties
-
-# (Motif Slider)
-object activeMotifSliderClass
-beginObjectProperties
-major 4
-minor 2
-release 0
-x 488
-y 100
-w 112
-h 20
-fgColor index 14
-bgColor index 2
-2ndBgColor index 14
-topShadowColor index 2
-botShadowColor index 14
-increment 40
-controlPv "$(CAM):Gain"
-controlLabelType "pvName"
-font "helvetica-medium-r-12.0"
-limitsFromDb
-endObjectProperties
-
-endGroup
-
-visPv "$(P)$(R)Gain.DISA"
-visMin "0"
-visMax "1"
-endObjectProperties
-
-# (Group)
-object activeGroupClass
-beginObjectProperties
-major 4
-minor 0
-release 0
-x 712
-y 100
-w 88
-h 20
-
-beginGroup
-
-# (Text Monitor)
-object activeXTextDspClass:noedit
-beginObjectProperties
-major 4
-minor 5
-release 0
-x 712
-y 100
-w 88
-h 20
-controlPv "$(P)$(R)Gain_RBV"
-font "helvetica-medium-r-12.0"
-fontAlign "center"
-fgColor index 15
-fgAlarm
-bgColor index 12
-limitsFromDb
-nullColor index 40
-smartRefresh
-useHexPrefix
-newPos
-objType "monitors"
-noExecuteClipMask
-endObjectProperties
-
-endGroup
-
-visPv "$(P)$(R)Gain_RBV.DISA"
-visMin "0"
-visMax "1"
-endObjectProperties
-
 # (Rectangle)
 object activeRectangleClass
 beginObjectProperties
@@ -1154,9 +886,9 @@ major 4
 minor 0
 release 0
 x 416
-y 380
+y 260
 w 400
-h 112
+h 88
 lineColor index 3
 fill
 fillColor index 3
@@ -1169,7 +901,7 @@ major 4
 minor 1
 release 0
 x 556
-y 388
+y 268
 w 48
 h 20
 font "helvetica-medium-r-12.0"
@@ -1189,7 +921,7 @@ major 4
 minor 1
 release 0
 x 608
-y 388
+y 268
 w 88
 h 20
 fgColor index 25
@@ -1213,7 +945,7 @@ major 4
 minor 1
 release 0
 x 704
-y 388
+y 268
 w 88
 h 20
 font "helvetica-medium-r-12.0"
@@ -1235,7 +967,7 @@ major 4
 minor 1
 release 0
 x 704
-y 388
+y 268
 w 88
 h 20
 font "helvetica-medium-r-12.0"
@@ -1258,7 +990,7 @@ major 4
 minor 1
 release 0
 x 556
-y 436
+y 316
 w 96
 h 20
 font "helvetica-medium-r-12.0"
@@ -1278,7 +1010,7 @@ major 4
 minor 5
 release 0
 x 704
-y 412
+y 292
 w 88
 h 20
 controlPv "$(P)$(R)ArrayCounter_RBV"
@@ -1304,7 +1036,7 @@ major 4
 minor 1
 release 0
 x 656
-y 412
+y 292
 w 40
 h 20
 fgColor index 25
@@ -1327,7 +1059,7 @@ major 4
 minor 1
 release 0
 x 416
-y 372
+y 252
 w 112
 h 20
 font "helvetica-bold-r-12.0"
@@ -1485,7 +1217,7 @@ major 4
 minor 5
 release 0
 x 704
-y 436
+y 316
 w 88
 h 20
 controlPv "$(P)$(R)NumImagesCounter_RBV"
@@ -1511,7 +1243,7 @@ major 4
 minor 1
 release 0
 x 556
-y 412
+y 292
 w 96
 h 20
 font "helvetica-medium-r-12.0"
@@ -1531,7 +1263,7 @@ major 4
 minor 1
 release 0
 x 452
-y 404
+y 284
 w 121
 h 13
 font "helvetica-medium-r-12.0"
@@ -2015,7 +1747,7 @@ major 4
 minor 0
 release 0
 x 644
-y 180
+y 152
 w 59
 h 18
 
@@ -2028,7 +1760,7 @@ major 4
 minor 5
 release 0
 x 644
-y 180
+y 152
 w 59
 h 18
 controlPv "$(P)$(R)AcquirePeriod"
@@ -2505,50 +2237,6 @@ beginObjectProperties
 major 4
 minor 1
 release 0
-x 416
-y 688
-w 104
-h 20
-font "helvetica-bold-r-12.0"
-fontAlign "right"
-fgColor index 14
-bgColor index 3
-visPv "$(P)$(R)IMAGE2:StreamType"
-visMin "0"
-visMax "1"
-value {
-  "DataStream:"
-}
-endObjectProperties
-
-# (Static Text)
-object activeXTextClass
-beginObjectProperties
-major 4
-minor 1
-release 0
-x 4
-y 688
-w 104
-h 20
-font "helvetica-bold-r-12.0"
-fontAlign "right"
-fgColor index 14
-bgColor index 3
-visPv "$(P)$(R)IMAGE1:StreamType"
-visMin "0"
-visMax "1"
-value {
-  "DataStream:"
-}
-endObjectProperties
-
-# (Static Text)
-object activeXTextClass
-beginObjectProperties
-major 4
-minor 1
-release 0
 x 232
 y 4
 w 116
@@ -2570,7 +2258,7 @@ major 4
 minor 0
 release 0
 x 584
-y 208
+y 180
 w 120
 h 20
 fgColor index 25
@@ -2590,7 +2278,7 @@ major 4
 minor 1
 release 0
 x 488
-y 208
+y 180
 w 88
 h 20
 font "helvetica-medium-r-12.0"
@@ -2610,7 +2298,7 @@ major 4
 minor 5
 release 0
 x 712
-y 208
+y 180
 w 88
 h 20
 controlPv "$(P)$(R)Bin_RBV"
@@ -2626,5 +2314,463 @@ useHexPrefix
 newPos
 objType "monitors"
 noExecuteClipMask
+endObjectProperties
+
+# (Rectangle)
+object activeRectangleClass
+beginObjectProperties
+major 4
+minor 0
+release 0
+x 416
+y 372
+w 400
+h 104
+lineColor index 3
+fill
+fillColor index 3
+endObjectProperties
+
+# (Static Text)
+object activeXTextClass
+beginObjectProperties
+major 4
+minor 1
+release 0
+x 416
+y 360
+w 80
+h 20
+font "helvetica-bold-r-12.0"
+fontAlign "center"
+fgColor index 14
+bgColor index 3
+value {
+  "Pedestals"
+}
+endObjectProperties
+
+# (Static Text)
+object activeXTextClass
+beginObjectProperties
+major 4
+minor 1
+release 0
+x 704
+y 384
+w 88
+h 20
+font "helvetica-medium-r-12.0"
+fontAlign "center"
+fgColor index 35
+bgColor index 12
+visPv "CALC\\\{(A)\}($(P)$(R)AcquirePedestal)"
+visInvert
+visMin "0"
+visMax "1"
+value {
+  "Collecting"
+}
+endObjectProperties
+
+# (Message Button)
+object activeMessageButtonClass
+beginObjectProperties
+major 4
+minor 1
+release 0
+x 608
+y 384
+w 88
+h 20
+fgColor index 25
+onColor index 6
+offColor index 3
+topShadowColor index 1
+botShadowColor index 13
+controlPv "$(CAM):AcquirePedestal"
+pressValue "1"
+onLabel "Acquire"
+offLabel "Acquire"
+3d
+useEnumNumeric
+font "helvetica-medium-r-14.0"
+endObjectProperties
+
+# (Static Text)
+object activeXTextClass
+beginObjectProperties
+major 4
+minor 1
+release 0
+x 500
+y 384
+w 104
+h 20
+font "helvetica-medium-r-12.0"
+fontAlign "right"
+fgColor index 14
+bgColor index 0
+useDisplayBg
+value {
+  "Acquire pedestal"
+}
+endObjectProperties
+
+# (Text Monitor)
+object activeXTextDspClass:noedit
+beginObjectProperties
+major 4
+minor 5
+release 0
+x 704
+y 440
+w 88
+h 20
+controlPv "$(P)$(R)PedestalTimestamp_RBV"
+font "helvetica-medium-r-12.0"
+fontAlign "center"
+fgColor index 15
+fgAlarm
+bgColor index 12
+limitsFromDb
+nullColor index 40
+smartRefresh
+useHexPrefix
+newPos
+objType "monitors"
+noExecuteClipMask
+endObjectProperties
+
+# (Static Text)
+object activeXTextClass
+beginObjectProperties
+major 4
+minor 1
+release 0
+x 480
+y 440
+w 124
+h 20
+font "helvetica-medium-r-12.0"
+fontAlign "right"
+fgColor index 14
+bgColor index 0
+useDisplayBg
+value {
+  "Pedestal timestamp"
+}
+endObjectProperties
+
+# (Text Monitor)
+object activeXTextDspClass:noedit
+beginObjectProperties
+major 4
+minor 5
+release 0
+x 704
+y 412
+w 88
+h 20
+controlPv "$(P)$(R)PedestalNumImages_RBV"
+font "helvetica-medium-r-12.0"
+fontAlign "center"
+fgColor index 15
+fgAlarm
+bgColor index 12
+limitsFromDb
+nullColor index 40
+smartRefresh
+useHexPrefix
+newPos
+objType "monitors"
+noExecuteClipMask
+endObjectProperties
+
+# (Text Control)
+object activeXTextDspClass
+beginObjectProperties
+major 4
+minor 5
+release 0
+x 612
+y 412
+w 84
+h 16
+controlPv "$(P)$(R)PedestalNumImages"
+format "decimal"
+font "helvetica-medium-r-12.0"
+fgColor index 25
+fgAlarm
+bgColor index 5
+editable
+autoHeight
+motifWidget
+nullColor index 40
+smartRefresh
+fastUpdate
+useHexPrefix
+newPos
+objType "controls"
+noExecuteClipMask
+endObjectProperties
+
+# (Static Text)
+object activeXTextClass
+beginObjectProperties
+major 4
+minor 1
+release 0
+x 464
+y 412
+w 140
+h 20
+font "helvetica-medium-r-12.0"
+fontAlign "right"
+fgColor index 14
+bgColor index 0
+useDisplayBg
+value {
+  "# Pedestals To Capture"
+}
+endObjectProperties
+
+# (Related Display)
+object relatedDisplayClass
+beginObjectProperties
+major 4
+minor 3
+release 0
+x 12
+y 480
+w 92
+h 24
+fgColor index 14
+bgColor index 3
+topShadowColor index 0
+botShadowColor index 14
+font "helvetica-medium-r-12.0"
+buttonLabel "Cooling Status"
+numPvs 4
+numDsps 1
+displayFileName {
+  0 "craydl-cooling.edl"
+}
+symbols {
+  0 "P=$(DEV),R=:,CAM=$(CAM),CAM_NAME=$(CAM_NAME)"
+}
+replaceSymbols {
+  0 1
+}
+propagateMacros {
+  0 0
+}
+endObjectProperties
+
+# (Related Display)
+object relatedDisplayClass
+beginObjectProperties
+major 4
+minor 3
+release 0
+x 108
+y 480
+w 92
+h 24
+fgColor index 14
+bgColor index 3
+topShadowColor index 0
+botShadowColor index 14
+font "helvetica-medium-r-12.0"
+buttonLabel "Vacuum Status"
+numPvs 4
+numDsps 1
+displayFileName {
+  0 "craydl-vacuum.edl"
+}
+symbols {
+  0 "P=$(CAM),R=:,CAM=$(CAM),CAM_NAME=$(CAM_NAME)"
+}
+replaceSymbols {
+  0 1
+}
+propagateMacros {
+  0 0
+}
+endObjectProperties
+
+# (Text Monitor)
+object activeXTextDspClass:noedit
+beginObjectProperties
+major 4
+minor 5
+release 0
+x 712
+y 208
+w 88
+h 20
+controlPv "$(P)$(R)ReadoutMode_RBV"
+font "helvetica-medium-r-12.0"
+fontAlign "center"
+fgColor index 15
+fgAlarm
+bgColor index 12
+limitsFromDb
+nullColor index 40
+smartRefresh
+useHexPrefix
+newPos
+objType "monitors"
+noExecuteClipMask
+endObjectProperties
+
+# (Menu Button)
+object activeMenuButtonClass
+beginObjectProperties
+major 4
+minor 0
+release 0
+x 584
+y 208
+w 120
+h 20
+fgColor index 25
+bgColor index 5
+inconsistentColor index 40
+topShadowColor index 2
+botShadowColor index 13
+controlPv "$(P)$(R)ReadoutMode"
+indicatorPv "$(P)$(R)ReadoutMode_RBV"
+font "helvetica-medium-r-14.0"
+endObjectProperties
+
+# (Static Text)
+object activeXTextClass
+beginObjectProperties
+major 4
+minor 1
+release 0
+x 488
+y 208
+w 88
+h 20
+font "helvetica-medium-r-12.0"
+fontAlign "right"
+fgColor index 14
+bgColor index 0
+useDisplayBg
+value {
+  "Readout mode"
+}
+endObjectProperties
+
+# (Text Monitor)
+object activeXTextDspClass:noedit
+beginObjectProperties
+major 4
+minor 5
+release 0
+x 248
+y 396
+w 76
+h 20
+controlPv "$(P)$(R)ShutterStatus_RBV"
+font "helvetica-medium-r-12.0"
+fontAlign "center"
+fgColor index 15
+fgAlarm
+bgColor index 12
+limitsFromDb
+nullColor index 40
+smartRefresh
+useHexPrefix
+newPos
+objType "monitors"
+noExecuteClipMask
+endObjectProperties
+
+# (Static Text)
+object activeXTextClass
+beginObjectProperties
+major 4
+minor 1
+release 0
+x 36
+y 396
+w 120
+h 20
+font "helvetica-medium-r-12.0"
+fontAlign "right"
+fgColor index 14
+bgColor index 0
+useDisplayBg
+value {
+  "Shutter status"
+}
+endObjectProperties
+
+# (Text Monitor)
+object activeXTextDspClass:noedit
+beginObjectProperties
+major 4
+minor 5
+release 0
+x 248
+y 424
+w 76
+h 20
+controlPv "$(P)$(R)EnableDetectorQuerying_RBV"
+font "helvetica-medium-r-12.0"
+fontAlign "center"
+fgColor index 15
+fgAlarm
+bgColor index 12
+limitsFromDb
+nullColor index 40
+smartRefresh
+useHexPrefix
+newPos
+objType "monitors"
+noExecuteClipMask
+endObjectProperties
+
+# (Menu Button)
+object activeMenuButtonClass
+beginObjectProperties
+major 4
+minor 0
+release 0
+x 164
+y 424
+w 76
+h 20
+fgColor index 25
+bgColor index 5
+inconsistentColor index 40
+topShadowColor index 2
+botShadowColor index 13
+controlPv "$(P)$(R)EnableDetectorQuerying"
+indicatorPv "$(P)$(R)EnableDetectorQuerying_RBV"
+font "helvetica-medium-r-14.0"
+endObjectProperties
+
+# (Static Text)
+object activeXTextClass
+beginObjectProperties
+major 4
+minor 1
+release 0
+x 36
+y 424
+w 120
+h 20
+font "helvetica-medium-r-12.0"
+fontAlign "right"
+fgColor index 14
+bgColor index 0
+useDisplayBg
+value {
+  "Detector querying"
+}
 endObjectProperties
 
