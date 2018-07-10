@@ -24,7 +24,7 @@ DataObject *FrameSyncObject::Acquire(void)
 
     std::cout << "Popped value" << std::endl;
 
-    // TODO FIXME remove this, this is just for development
+    // TODO: FIXME: remove this, this is just for development
     m_storage.timestampedFrameQueue.push(frame);
 
     return new DataObject(frame);
@@ -34,11 +34,7 @@ int FrameSyncObject::FidDiff(DataObject *dobj)
 {
     std::cout << "Doing FidDiff" << std::endl;
 
-    if (dobj == NULL)
-    {
-        std::cerr << "FidDiff got null data object!" << std::endl;
-        return -1;
-    }
+    assert(dobj != NULL);
 
     NDArray *frame = static_cast<NDArray *>(dobj->data);
 
@@ -63,11 +59,7 @@ void FrameSyncObject::QueueData(DataObject *dobj, epicsTimeStamp &evtTime)
 {
     std::cout << "Got queued data" << std::endl;
 
-    if (dobj == NULL)
-    {
-        std::cerr << "QueueData got null data object!" << std::endl;
-        return;
-    }
+    assert(dobj != NULL);
 
     NDArray *frame = static_cast<NDArray *>(dobj->data);
 

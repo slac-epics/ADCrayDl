@@ -32,7 +32,6 @@ epicsEnvSet( "IOC_PV",	"IOC:TSTRAYONIX:123" )
 epicsEnvSet( "EVR_PV",	"EVR:TSTRAYONIX:123" )
 epicsEnvSet( "TRIG_PV",	"$(EVR_PV):TRIG0" )
 # Configure EVR
-#epicsEnvSet( "EVR_CARD",	"0" )
 epicsEnvSet( "EVR_CARD",	"0" )
 # EVR Type: 0=VME, 1=PMC, 15=SLAC
 epicsEnvSet( "EVR_TYPE",	"15" )
@@ -68,11 +67,11 @@ ADCrayDlConfig("$(PORT)", 3, 0, -1)
 syncdebug(2)
 
 # Create a standard arrays plugin, set it to get data from first CrayDl driver.
-NDStdArraysConfigure("Image2", 3, 0, "$(PORT)", 0, -1)
+NDStdArraysConfigure("Image1", 3, 0, "$(PORT)", 0, -1)
 
 # This creates a waveform large enough for 7680x7680 arrays.
 # This waveform allows transporting 16-bit images
-dbLoadRecords("NDStdArrays.template", "P=$(PREFIX)$(CAM_PREFIX),R=IMAGE2:,PORT=Image2,ADDR=0,TIMEOUT=1,NDARRAY_PORT=$(PORT),DATATYPE=3,TYPE=Int16,FTVL=USHORT,NELEMENTS=58982400,ENABLED=1")
+dbLoadRecords("NDStdArrays.template", "P=$(PREFIX),R=image1:,PORT=Image1,ADDR=0,TIMEOUT=1,NDARRAY_PORT=$(PORT),DATATYPE=3,TYPE=Int16,FTVL=USHORT,NELEMENTS=58982400,ENABLED=1")
 
 # Set up autosave
 set_requestfile_path("./")
@@ -82,7 +81,7 @@ set_savefile_path("./autosave")
 set_pass0_restoreFile("auto_settings.sav")
 set_pass1_restoreFile("auto_settings.sav")
 save_restoreSet_status_prefix("$(PREFIX)")
-dbLoadRecords("$(AUTOSAVE)/asApp/Db/save_restoreStatus.db", "P=$(PREFIX)")
+dbLoadRecords("$(AUTOSAVE)/asApp/Db/save_restoreStatus.db", "P=$(PREFIX),IOC=$(PREFIX)SAVE_RESTORE_ST")
 
 set_requestfile_path("$(ADCRAYDL)/ADCrayDlApp/Db")
 

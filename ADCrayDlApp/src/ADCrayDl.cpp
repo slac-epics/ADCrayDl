@@ -140,19 +140,6 @@ bool ADCrayDl::handleVacuumPV(const int function, const epicsInt32 value, asynSt
 
         return true;
     }
-    else if (function == IgnoreVacuumPumpFunction)
-    {
-        const craydl::RxReturnStatus error = m_rayonixDetector->IgnoreVacuumPump(value != 0);
-
-        if (error.IsError())
-        {
-            const std::string command = (value == 0) ? "un-ignoring" : "ignoring";
-            std::cerr << "Error " << command << " vacuum pump: " << error.ErrorText() << std::endl;
-            status = asynError;
-        }
-
-        return true;
-    }
 
     return false;
 }
@@ -181,14 +168,31 @@ asynStatus ADCrayDl::writeInt32(asynUser *pasynUser, epicsInt32 value)
 
         if (value)
         {
-            // TODO error handling
+            do // This do-while is a convenient solution to error handling. We can jump out of the block early.
+            {
+                craydl::RxReturnStatus error = m_rayonixDetector->SetupAcquisitionSequence(m_numImages, 1);
+                if (error.IsError())
+                {
+                    std::cerr << "Could not setup acquisition sequence to " << m_numImages << " images" << std::endl;
+                    continue; // Skip other code.
+                }
 
-            m_rayonixDetector->SetupAcquisitionSequence(m_numImages, 1);
-            m_rayonixDetector->SendParameters();
+                error = m_rayonixDetector->SendParameters();
+                if (error.IsError())
+                {
+                    std::cerr << "Could not send parameters to detector" << std::endl;
+                    continue; // Skip other code.
+                }
 
-            // Starts Acquisition of series of frames - Light means operated shutter I/O output signal
-            craydl::FrameAcquisitionType frame_type = craydl::FrameAcquisitionTypeLight;
-            m_rayonixDetector->StartAcquisition(frame_type);
+                // Starts Acquisition of series of frames - Light means operated shutter I/O output signal
+                craydl::FrameAcquisitionType frame_type = craydl::FrameAcquisitionTypeLight;
+                error = m_rayonixDetector->StartAcquisition(frame_type);
+                if (error.IsError())
+                {
+                    std::cerr << "Could not start acquisition" << std::endl;
+                    continue; // Skip other code.
+                }
+            } while (false);
 
             status = setIntegerParam(ADAcquire, 0);
         }
@@ -249,7 +253,7 @@ asynStatus ADCrayDl::writeInt32(asynUser *pasynUser, epicsInt32 value)
         switch (value)
         {
             case TriggerModeFreeRun:
-            case TriggerModeLCLSMode:
+            case TriggerModeLCLSMode: // TODO: LCLS mode is not yet implemented in the craydl SDK.
             default:
                 triggerMode = craydl::FrameTriggerTypeNone;
                 break;
@@ -328,7 +332,7 @@ asynStatus ADCrayDl::writeInt32(asynUser *pasynUser, epicsInt32 value)
             m_pollingThread = std::thread(&ADCrayDl::pollDetectorStatus, this, POLLING_INTERVAL_US);
         }
     }
-    else if (!handleCoolingPV(function, value, status) && !handleVacuumPV(function, value, status)) // Check if these are cooling of vacuum PVs
+    else if (!handleCoolingPV(function, value, status) && !handleVacuumPV(function, value, status)) // Check if these are cooling or vacuum PVs
     {
         // If not, use base method.
         status = ADDriver::writeInt32(pasynUser, value);
@@ -389,7 +393,7 @@ asynStatus ADCrayDl::writeFloat64(asynUser *pasynUser, epicsFloat64 value)
             status = asynError;
         }
     }
-    else if (!handleCoolingPV(function, value, status)) // Check if these are cooling of vacuum PVs
+    else if (!handleCoolingPV(function, value, status)) // Check if these are cooling PVs
     {
         status = ADDriver::writeFloat64(pasynUser, value);
     }
@@ -476,16 +480,11 @@ void ADCrayDl::BackgroundFrameReady(const craydl::RxFrame *frame_p)
     setIntegerParam(PedestalTimestampFunction, toUnixTimestamp(metadata.AcquisitionStartTimestamp()));
 
     callParamCallbacks();
-
-    frame_p->write("/tmp/background_frame.tif");
 }
 
 void ADCrayDl::RawFrameReady(int frame_number, const craydl::RxFrame *frame_p)
 {
     // Intentionally empty.
-    frame_p->write("/tmp/raw_frame.tif");
-
-    std::cout << "Temp is " << m_rayonixDetector->SensorTemperatureMin() << std::endl;
 
     applyFrameToAD(frame_p);
 }
@@ -493,9 +492,6 @@ void ADCrayDl::RawFrameReady(int frame_number, const craydl::RxFrame *frame_p)
 void ADCrayDl::FrameReady(int frame_number, const craydl::RxFrame *frame_p)
 {
     std::cout << "Frame is ready" << std::endl;
-
-    m_rayonixDetector->backgroundFrame()->write("/tmp/ready_frame_bg.tif");
-    frame_p->write("/tmp/ready_frame.tif");
 
     // applyFrameToAD(frame_p);
 }
@@ -526,7 +522,7 @@ void ADCrayDl::applyFrameToAD(const craydl::RxFrame *frame_p)
         inArray->initDimension(&m_dimsOut[i], m_dims[i]);
     }
 
-    // The dimensions are the same and the data type is the same, then just copy the input image to the output image.
+    // The dimensions are the same and the data type is the same, just copy the input image to the output image.
     memcpy(inArray->pData, frame_p->getBufferAddress(), frame_p->getSize());
 
     // Set the frame's hardware timestamp on the frame. This timestamp will be used later to calculate the FidDiff.
@@ -664,7 +660,6 @@ ADCrayDl::ADCrayDl(const char *portName, NDDataType_t dataType,
 
     // Vacuum
     createParam(VACUUM_VALVE_STR,         asynParamInt32,   &VacuumValveFunction);
-    createParam(IGNORE_VACUUM_PUMP_STR,   asynParamInt32,   &IgnoreVacuumPumpFunction);
     createParam(LINE_PRESSURE_STR,        asynParamFloat64, &LinePressureFunction);
     createParam(CHAMBER_PRESSURE_STR,     asynParamFloat64, &ChamberPressureFunction);
     createParam(VACUUM_VALVE_OPEN_STR,    asynParamInt32,   &VacuumValveOpenFunction);
@@ -755,7 +750,7 @@ ADCrayDl::~ADCrayDl()
     m_publishingRunning = false;
     if (m_publishingThread.joinable())
     {
-        m_publishingThread.join(); // TODO the queue may be blocking while waiting for new elements.
+        m_publishingThread.join(); // TODO: the queue may be blocking while waiting for new elements.
     }
 
     // Close connection to the detector

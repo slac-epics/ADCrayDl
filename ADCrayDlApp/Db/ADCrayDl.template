@@ -285,31 +285,6 @@ record(bi, "$(P)$(R)VacuumValve_RBV")
     field(SCAN, "I/O Intr")
 }
 
-# record(bo, "$(P)$(R)IgnoreVacuumPump")
-# {
-#     field(PINI, "NO")
-#     field(DTYP, "asynInt32")
-#     field(OUT,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))IgnoreVacuumPump")
-#     field(ZNAM, "Un-ignore")
-#     field(ONAM, "Ignore")
-#     field(ZSV,  "NO_ALARM")
-#     field(OSV,  "MAJOR")
-#     field(VAL,  "0")
-#     info(autosaveFields, "VAL")
-#     info(asyn:READBACK, "1")
-# }
-
-# record(bi, "$(P)$(R)IgnoreVacuumPump_RBV")
-# {
-#     field(DTYP, "asynInt32")
-#     field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))IgnoreVacuumPump")
-#     field(ZNAM, "Un-ignore")
-#     field(ONAM, "Ignore")
-#     field(ZSV,  "NO_ALARM")
-#     field(OSV,  "MAJOR")
-#     field(SCAN, "I/O Intr")
-# }
-
 record(ai, "$(P)$(R)LinePressure_RBV")
 {
     field(DTYP, "asynFloat64")

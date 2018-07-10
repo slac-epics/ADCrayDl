@@ -5,7 +5,6 @@ $(P)$(R)PedestalNumImages
 $(P)$(R)ReadoutMode
 $(P)$(R)EnableDetectorQuerying
 $(P)$(R)VacuumValve
-$(P)$(R)IgnoreVacuumPump
 $(P)$(R)Cooler
 $(P)$(R)CCDTempSetpoint
 $(P)$(R)CoolerTempSetpoint
