@@ -474,8 +474,6 @@ static time_t toUnixTimestamp(const boost::posix_time::ptime &pt)
 void ADCrayDl::BackgroundFrameReady(const craydl::RxFrame *frame_p)
 {
     // Handle pedestals
-    std::cout << "Background frame is ready" << std::endl;
-
     const craydl::FrameMetaData &metadata = frame_p->metaData();
     setIntegerParam(PedestalTimestampFunction, toUnixTimestamp(metadata.AcquisitionStartTimestamp()));
 
@@ -485,15 +483,11 @@ void ADCrayDl::BackgroundFrameReady(const craydl::RxFrame *frame_p)
 void ADCrayDl::RawFrameReady(int frame_number, const craydl::RxFrame *frame_p)
 {
     // Intentionally empty.
-
-    applyFrameToAD(frame_p);
 }
 
 void ADCrayDl::FrameReady(int frame_number, const craydl::RxFrame *frame_p)
 {
-    std::cout << "Frame is ready" << std::endl;
-
-    // applyFrameToAD(frame_p);
+    applyFrameToAD(frame_p);
 }
 
 void ADCrayDl::FrameAborted(int frame_number)
@@ -515,6 +509,12 @@ void ADCrayDl::applyFrameToAD(const craydl::RxFrame *frame_p)
 {
     using namespace boost::posix_time;
 
+    // Get timestamp of frame
+    epicsTimeStamp newEvrTime;
+    updateTimeStamp(&newEvrTime);
+
+    std::cout << "Current system time: " << time(0) << std::endl; 
+
     NDArray *inArray = pNDArrayPool->alloc(NUM_DIMS, m_dims, NDUInt16, frame_p->getSize(), NULL);
 
     for (size_t i = 0; i < NUM_DIMS; i++)
@@ -525,17 +525,24 @@ void ADCrayDl::applyFrameToAD(const craydl::RxFrame *frame_p)
     // The dimensions are the same and the data type is the same, just copy the input image to the output image.
     memcpy(inArray->pData, frame_p->getBufferAddress(), frame_p->getSize());
 
-    // Set the frame's hardware timestamp on the frame. This timestamp will be used later to calculate the FidDiff.
-    ptime t = frame_p->metaData().HardwareTimestamp(); 
-    time_duration diff(t - EPOCH);
+    // Set timestamp
+    inArray->epicsTS = newEvrTime;
 
-    epicsTimeStamp ts;
-    ts.secPastEpoch = diff.total_seconds();
-    ts.nsec = diff.total_nanoseconds() - (diff.total_seconds() * 1e9);
-    inArray->epicsTS = ts;
+    std::cout << "The new timestamp is " << inArray->epicsTS.secPastEpoch << std::endl;
 
-    // Put this frame in the frame queue.
-    m_storage.frameQueue.push(inArray);
+    increaseArrayCounter();
+
+    // Call callbacks.
+    int arrayCallbacks;
+    getIntegerParam(NDArrayCallbacks, &arrayCallbacks);
+    if (arrayCallbacks != 0)
+    {
+        // std::cout << "Calling image data callback" << std::endl;
+        doCallbacksGenericPointer(inArray, NDArrayData, 0);
+    }
+
+    // The module is done with the frame.
+    inArray->release();
 }
 
 int ADCrayDl::updateDimensionSize()
@@ -575,29 +582,6 @@ void ADCrayDl::increaseArrayCounter()
     setIntegerParam(NDArrayCounter, arrayCounter);
 }
 
-void ADCrayDl::publishingTask()
-{
-    while (m_publishingRunning.get())
-    {
-        NDArray *frame;
-        m_storage.timestampedFrameQueue.blockingPop(frame);
-
-        increaseArrayCounter();
-
-        // Call callbacks.
-        int arrayCallbacks;
-        getIntegerParam(NDArrayCallbacks, &arrayCallbacks);
-        if (arrayCallbacks != 0)
-        {
-            std::cout << "Calling image data callback" << std::endl;
-            doCallbacksGenericPointer(frame, NDArrayData, 0);
-        }
-
-        // The module is done with the frame.
-        frame->release();
-    }
-}
-
 static DBADDR getPVAddr(const char *evName)
 {
     DBADDR addr;
@@ -629,7 +613,6 @@ ADCrayDl::ADCrayDl(const char *portName, NDDataType_t dataType,
                priority, stackSize),
        m_rayonixDetector(craydl::RxDetector::create()),
        m_running(false),
-       m_publishingRunning(false),
        m_numImages(1),
        m_numPedestals(1)
 {
@@ -733,10 +716,6 @@ ADCrayDl::ADCrayDl(const char *portName, NDDataType_t dataType,
             DRIVER_NAME, functionName);
         return;
     }
-
-    // We need a thread that will wait for the timestamped frames.
-    m_publishingRunning = true;
-    m_publishingThread = std::thread(&ADCrayDl::publishingTask, this);
 }
 
 ADCrayDl::~ADCrayDl()
@@ -745,12 +724,6 @@ ADCrayDl::~ADCrayDl()
     if (m_pollingThread.joinable())
     {
         m_pollingThread.join();
-    }
-
-    m_publishingRunning = false;
-    if (m_publishingThread.joinable())
-    {
-        m_publishingThread.join(); // TODO: the queue may be blocking while waiting for new elements.
     }
 
     // Close connection to the detector
@@ -788,34 +761,9 @@ static void configADCrayDlCallFunc(const iocshArgBuf *args)
                       args[4].ival, args[5].ival);
 }
 
-static void ADCrayDlInitTiming(const iocshArgBuf *args)
-{
-    // Create thread that takes care of frame timestamping.
-    static FrameSyncObject frameSyncObject;
-
-    frameSyncObject.SetParams(static_cast<epicsUInt32 *>(getPVAddr(args[0].sval).pfield),
-                              static_cast<epicsUInt32 *>(getPVAddr(args[1].sval).pfield),
-                              static_cast<double *>(getPVAddr(args[2].sval).pfield),
-                              args[3].sval);
-
-    static std::thread timestampingThread(&FrameSyncObject::poll, &frameSyncObject);
-    timestampingThread.detach();
-}
-
-static const iocshArg ADCrayDlInitTimingArg0 = {"Trigger event PV", iocshArgString};
-static const iocshArg ADCrayDlInitTimingArg1 = {"Generation counter PV", iocshArgString};
-static const iocshArg ADCrayDlInitTimingArg2 = {"Delay estimate PV", iocshArgString};
-static const iocshArg ADCrayDlInitTimingArg3 = {"Sync status PV", iocshArgString};
-static const iocshArg * const ADCrayDlInitTimingArgs[] = {&ADCrayDlInitTimingArg0,
-                                                          &ADCrayDlInitTimingArg1,
-                                                          &ADCrayDlInitTimingArg2,
-                                                          &ADCrayDlInitTimingArg3};
-static const iocshFuncDef initTimingADCrayDl = {"ADCrayDlInitTiming", 4, ADCrayDlInitTimingArgs};
-
 static void ADCrayDlRegister(void)
 {
     iocshRegister(&configADCrayDl, configADCrayDlCallFunc);
-    iocshRegister(&initTimingADCrayDl, ADCrayDlInitTiming);
 }
 
 static int GetCurrentTime(subRecord *precord)
@@ -828,7 +776,6 @@ static int GetCurrentTime(subRecord *precord)
 extern "C"
 {
 epicsExportRegistrar(ADCrayDlRegister);
-epicsExportRegistrar(ADCrayDlInitTiming);
 epicsRegisterFunction(GetCurrentTime);
 }
 

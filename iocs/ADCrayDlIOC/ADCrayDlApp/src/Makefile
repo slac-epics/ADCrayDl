@@ -22,8 +22,8 @@ $(PROD_NAME)_DBD += ADCrayDlSupport.dbd
 
 $(PROD_NAME)_DBD += evrSupport.dbd
 $(PROD_NAME)_DBD += devMrfEr.dbd
-$(PROD_NAME)_DBD += timesync.dbd
 $(PROD_NAME)_DBD += diagTimer.dbd
+$(PROD_NAME)_DBD += timeStampFifo.dbd
 
 # <name>_registerRecordDeviceDriver.cpp will be created from <name>.dbd
 PROD_SRCS_DEFAULT += $(PROD_NAME)_registerRecordDeviceDriver.cpp $(PROD_NAME)Main.cpp
@@ -38,8 +38,8 @@ PROD_DEPLIB_DIRS += $(RAYONIX_LIB)
 # FIXME change paths to use variables
 PROD_DEPLIB_DIRS += $(AUTOSAVE)/lib/linux-x86_64
 
-PROD_DEPLIB_DIRS += $(TIMESYNC)/lib/linux-x86_64
-PROD_SYS_LIBS += timesync
+PROD_DEPLIB_DIRS += $(TIMESTAMPFIFO)/lib/linux-x86_64
+PROD_SYS_LIBS += timeStampFifo
 
 PROD_DEPLIB_DIRS += $(EVENT2)/lib/linux-x86_64
 PROD_SYS_LIBS += devMrfEr

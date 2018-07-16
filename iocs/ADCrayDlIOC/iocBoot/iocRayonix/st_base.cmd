@@ -10,6 +10,8 @@ epicsEnvSet("PREFIX", "13SIM1:")
 
 epicsEnvSet("CAM_PREFIX", "cam1:")
 
+epicsEnvSet("TSS", "$(PREFIX)$(CAM_PREFIX)TSS")
+
 # The port name for the detector
 epicsEnvSet("PORT",   "SIM1")
 # The queue size for all plugins
@@ -28,13 +30,16 @@ epicsEnvSet("MAX_THREADS", "8")
 epicsEnvSet("EPICS_DB_INCLUDE_PATH", "$(ADCORE)/db")
 
 # PV Prefixes
-epicsEnvSet( "IOC_PV",	"IOC:TSTRAYONIX:123" )
-epicsEnvSet( "EVR_PV",	"EVR:TSTRAYONIX:123" )
-epicsEnvSet( "TRIG_PV",	"$(EVR_PV):TRIG0" )
+# epicsEnvSet( "IOC_PV",	"IOC:TSTRAYONIX:123" )
+epicsEnvSet( "EVR",	"EVR:TSTRAYONIX:123" )
+# epicsEnvSet( "TRIG_PV",	"$(EVR_PV):TRIG0" )
 # Configure EVR
 epicsEnvSet( "EVR_CARD",	"0" )
 # EVR Type: 0=VME, 1=PMC, 15=SLAC
 epicsEnvSet( "EVR_TYPE",	"15" )
+
+# Set timeStampFifo debug level
+var DEBUG_TS_FIFO 5
 
 # < /reg/d/iocCommon/All/pre_linux.cmd
 
@@ -52,19 +57,22 @@ asynSetMinTimerPeriod(0.001)
 # Uncomment the following line to set it in the IOC.
 epicsEnvSet("EPICS_CA_MAX_ARRAY_BYTES", "1000000000")
 
-
 # Configure a PMC EVR
 # ErDebugLevel( 99 )
 ErConfigure( $(EVR_CARD), 0, 0, 0, $(EVR_TYPE) )
-dbLoadRecords("$(EVENT2)/db/evrSLAC.db", "EVR=$(EVR_PV),CARD=$(EVR_CARD),IP0E=Enabled,IP1E=Enabled,IP2E=Enabled")
+dbLoadRecords("$(EVENT2)/db/evrSLAC.db", "EVR=$(EVR),CARD=$(EVR_CARD),IP0E=Enabled,IP1E=Enabled,IP2E=Enabled")
 
-dbLoadRecords("$(ADCRAYDL)/db/ADCrayDl.template","P=$(PREFIX),R=$(CAM_PREFIX),PORT=$(PORT),ADDR=0,TIMEOUT=1,MAXAGEPEDESTAL=10")
+dbLoadRecords("$(ADCRAYDL)/db/ADCrayDl.template","P=$(PREFIX),R=$(CAM_PREFIX),TSS=$(TSS),PORT=$(PORT),ADDR=0,TIMEOUT=1,MAXAGEPEDESTAL=10")
 # Create a CrayDl driver
 # CrayDlConfig(const char *portName, int dataType,
 #                   int maxBuffers, int maxMemory, int priority, int stackSize)
 ADCrayDlConfig("$(PORT)", 3, 0, -1)
 
-syncdebug(2)
+# Load timeStampFifo.template w/ these macros
+# DEV - prefix for all timeStampFifo records
+# PORT_PV - PV name for the camera asyn port
+# EC_PV - PV name that can be read to get the current trigger event code
+dbLoadRecords("$(TIMESTAMPFIFO)/db/timeStampFifo.template",  "DEV=$(TSS),PORT_PV=$(PREFIX)$(CAM_PREFIX)PortName_RBV,EC_PV=$(EVR):TRIG3:EC_RBV,DLY=1" )
 
 # Create a standard arrays plugin, set it to get data from first CrayDl driver.
 NDStdArraysConfigure("Image1", 3, 0, "$(PORT)", 0, -1)
@@ -87,15 +95,18 @@ set_requestfile_path("$(ADCRAYDL)/ADCrayDlApp/Db")
 
 iocInit()
 
-ADCrayDlInitTiming("$(EVR_PV):Triggers.A", "$(EVR_PV):Triggers.M", "$(PREFIX)$(CAM_PREFIX)DataDelay.VAL", "$(PREFIX)$(CAM_PREFIX)SyncStatus")
+# ADCrayDlInitTiming("$(EVR_PV):Triggers.A", "$(EVR_PV):Triggers.M", "$(PREFIX)$(CAM_PREFIX)DataDelay.VAL", "$(PREFIX)$(CAM_PREFIX)SyncStatus")
 
 # save things every thirty seconds
 set_savefile_path("./autosave")
 create_monitor_set("auto_settings.req", 10, "P=$(PREFIX),IOC=$(PREFIX)$(CAM_PREFIX)")
 
 dbpf $(PREFIX)$(CAM_PREFIX)ArrayCallbacks 1
+
 # dbpf $(PREFIX)$(CAM_PREFIX)Bin 10x10
-#dbpf $(PREFIX)$(CAM_PREFIX)Acquire 1
+
+dbpf $(PREFIX)$(CAM_PREFIX)NumImages 10
+dbpf $(PREFIX)$(CAM_PREFIX)Acquire 1
 
 # All IOCs should dump some common info after initial startup.
 #< /reg/d/iocCommon/All/post_linux.cmd

@@ -13,16 +13,11 @@ CODE_CXXFLAGS=
 endif
 
 INC += ADCrayDl.h
-INC += ADCrayDlStorage.h
 INC += ADCrayDlRecordNames.h
-INC += ADCrayDlThreadedQueue.h
-INC += ADCrayDlFrameSyncObject.h
 
 LIBRARY_IOC = ADCrayDl
 
 LIB_SRCS += ADCrayDl.cpp
-LIB_SRCS += ADCrayDlStorage.cpp
-LIB_SRCS += ADCrayDlFrameSyncObject.cpp
 
 DBD += ADCrayDlSupport.dbd
 

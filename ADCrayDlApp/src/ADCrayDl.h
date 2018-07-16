@@ -9,10 +9,7 @@
 #include "ADDriver.h"
 #include "craydl/RxDetector.h"
 #include "craydl/RxFrame.h"
-#include "ADCrayDlStorage.h"
 #include "craydl/RxCallbacks.h"
-
-#include "ADCrayDlFrameSyncObject.h"
 
 #define DRIVER_VERSION      1
 #define DRIVER_REVISION     0
@@ -204,17 +201,12 @@ private:
     void publishingTask();
 
     std::unique_ptr<craydl::RxDetector> m_rayonixDetector; //!< SDK detector object.
-    static Storage m_storage;  //!< Static class that stores the frames which need to be timestamped.
     NDDimension_t m_dimsOut[NUM_DIMS]; //!< Array of dimension properties.
     size_t m_dims[NUM_DIMS];           //!< Array of dimension sizes.
 
     // Polling thread
     AtomicBool m_running;        //!< Flag that indicates if the polling thread should keep running or stop.
     std::thread m_pollingThread; //!< Thread that polls the detector.
-
-    // Frame publishing thread
-    AtomicBool m_publishingRunning;
-    std::thread m_publishingThread;
 
     // Custom parameters
     int AcquirePedestalFunction;
