@@ -8,8 +8,9 @@ include $(TOP)/configure/CONFIG
 #ARCH = cygwin-x86
 #ARCH = linux-x86
 #ARCH = linux-x86-rhel6
-ARCH = linux-x86_64
+#ARCH = linux-x86_64
 #ARCH = solaris-sparc
 #ARCH = vxWorks-ppc32
+ARCH = rhel6-x86_64
 TARGETS = envPaths cdCommands dllPath.bat
 include $(TOP)/configure/RULES.ioc

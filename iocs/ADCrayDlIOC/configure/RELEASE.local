@@ -10,7 +10,7 @@ BUILD_IOCS=YES
 # ===============================================================
 # Define the location and version of EPICS base
 # ===============================================================
-EPICS_SITE_TOP= /reg/g/pcds/epics
+EPICS_SITE_TOP= /opt/lcls/epics
 EPICS_MODULES=$(EPICS_SITE_TOP)/$(BASE_MODULE_VERSION)/modules
 BASE_MODULE_VERSION = R3.15.5-2.0
 EPICS_BASE=$(EPICS_SITE_TOP)/base/$(BASE_MODULE_VERSION)
