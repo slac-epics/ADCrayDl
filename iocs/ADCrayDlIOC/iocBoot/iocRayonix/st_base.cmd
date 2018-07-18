@@ -38,12 +38,12 @@ epicsEnvSet( "EVR_CARD",	"0" )
 # EVR Type: 0=VME, 1=PMC, 15=SLAC
 epicsEnvSet( "EVR_TYPE",	"15" )
 
-# Set timeStampFifo debug level
-var DEBUG_TS_FIFO 5
-
 # < /reg/d/iocCommon/All/pre_linux.cmd
 
 asynSetMinTimerPeriod(0.001)
+
+# Set timeStampFifo debug level
+var DEBUG_TS_FIFO 5
 
 # The EPICS environment variable EPICS_CA_MAX_ARRAY_BYTES needs to be set to a value at least as large
 # as the largest image that the standard arrays plugin will send.
@@ -79,7 +79,7 @@ NDStdArraysConfigure("Image1", 3, 0, "$(PORT)", 0, -1)
 
 # This creates a waveform large enough for 7680x7680 arrays.
 # This waveform allows transporting 16-bit images
-dbLoadRecords("NDStdArrays.template", "P=$(PREFIX),R=image1:,PORT=Image1,ADDR=0,TIMEOUT=1,NDARRAY_PORT=$(PORT),DATATYPE=3,TYPE=Int16,FTVL=USHORT,NELEMENTS=58982400,ENABLED=1")
+dbLoadRecords("NDStdArrays.template", "P=$(PREFIX)$(CAM_PREFIX),R=IMAGE2:,PORT=Image1,ADDR=0,TIMEOUT=1,NDARRAY_PORT=$(PORT),DATATYPE=3,TYPE=Int16,FTVL=USHORT,NELEMENTS=58982400,ENABLED=1")
 
 # Set up autosave
 set_requestfile_path("./")
@@ -101,12 +101,15 @@ iocInit()
 set_savefile_path("./autosave")
 create_monitor_set("auto_settings.req", 10, "P=$(PREFIX),IOC=$(PREFIX)$(CAM_PREFIX)")
 
+dbpf $(TSS):TsPolicy SYNCED
+# dbpf $(TSS):TsFreeRun 1
+
 dbpf $(PREFIX)$(CAM_PREFIX)ArrayCallbacks 1
 
 # dbpf $(PREFIX)$(CAM_PREFIX)Bin 10x10
 
 dbpf $(PREFIX)$(CAM_PREFIX)NumImages 10
-dbpf $(PREFIX)$(CAM_PREFIX)Acquire 1
+# dbpf $(PREFIX)$(CAM_PREFIX)Acquire 1
 
 # All IOCs should dump some common info after initial startup.
 #< /reg/d/iocCommon/All/post_linux.cmd

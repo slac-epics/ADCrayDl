@@ -193,8 +193,6 @@ asynStatus ADCrayDl::writeInt32(asynUser *pasynUser, epicsInt32 value)
                     continue; // Skip other code.
                 }
             } while (false);
-
-            status = setIntegerParam(ADAcquire, 0);
         }
     }
     else if (function == ADNumImages)
@@ -329,7 +327,7 @@ asynStatus ADCrayDl::writeInt32(asynUser *pasynUser, epicsInt32 value)
             }
 
             m_running = true;
-            m_pollingThread = std::thread(&ADCrayDl::pollDetectorStatus, this, POLLING_INTERVAL_US);
+            m_pollingThread = std::thread(&ADCrayDl::pollDetectorStatus, this, POLLING_INTERVAL_US); 
         }
     }
     else if (!handleCoolingPV(function, value, status) && !handleVacuumPV(function, value, status)) // Check if these are cooling or vacuum PVs
@@ -477,17 +475,33 @@ void ADCrayDl::BackgroundFrameReady(const craydl::RxFrame *frame_p)
     const craydl::FrameMetaData &metadata = frame_p->metaData();
     setIntegerParam(PedestalTimestampFunction, toUnixTimestamp(metadata.AcquisitionStartTimestamp()));
 
+    setIntegerParam(AcquirePedestalFunction, 0);
+
     callParamCallbacks();
 }
 
 void ADCrayDl::RawFrameReady(int frame_number, const craydl::RxFrame *frame_p)
 {
     // Intentionally empty.
+    applyFrameToAD(frame_p);
 }
 
 void ADCrayDl::FrameReady(int frame_number, const craydl::RxFrame *frame_p)
 {
-    applyFrameToAD(frame_p);
+    double seriesPercent;
+    int exposeFrameNumber;
+    double percentExposed;
+    int readoutFrameNumber;
+    double percentRead;
+    m_rayonixDetector->AcquisitionStatus(seriesPercent, exposeFrameNumber, percentExposed, readoutFrameNumber, percentRead);
+
+    if (percentRead == 100.0)
+    {
+        setIntegerParam(ADAcquire, 0);
+
+        /* Do callbacks so higher layers see any changes */
+        callParamCallbacks();
+    }
 }
 
 void ADCrayDl::FrameAborted(int frame_number)
@@ -509,9 +523,12 @@ void ADCrayDl::applyFrameToAD(const craydl::RxFrame *frame_p)
 {
     using namespace boost::posix_time;
 
+    std::cout << "Strting timestamp acq" << std::endl;
+
     // Get timestamp of frame
     epicsTimeStamp newEvrTime;
-    updateTimeStamp(&newEvrTime);
+    int status = updateTimeStamp(&newEvrTime);
+    std::cout << "Timestamp status is " << status << std::endl;
 
     std::cout << "Current system time: " << time(0) << std::endl; 
 
