@@ -3,8 +3,8 @@ beginScreenProperties
 major 4
 minor 0
 release 1
-x 1351
-y 1087
+x 1353
+y 1113
 w 750
 h 660
 font "helvetica-medium-r-18.0"
@@ -551,32 +551,6 @@ lineWidth 1
 lineAlarm
 endObjectProperties
 
-# (Related Display)
-object relatedDisplayClass
-beginObjectProperties
-major 4
-minor 3
-release 0
-x 464
-y 8
-w 96
-h 24
-fgColor index 14
-bgColor index 4
-topShadowColor index 1
-botShadowColor index 11
-font "helvetica-medium-r-12.0"
-buttonLabel "Raw Image..."
-numPvs 4
-numDsps 1
-displayFileName {
-  0 "craydl-raw"
-}
-menuLabel {
-  0 "Raw Image"
-}
-endObjectProperties
-
 # (Static Text)
 object activeXTextClass
 beginObjectProperties
@@ -624,7 +598,7 @@ beginObjectProperties
 major 4
 minor 3
 release 0
-x 392
+x 500
 y 8
 w 56
 h 24
@@ -1377,7 +1351,7 @@ beginObjectProperties
 major 4
 minor 3
 release 0
-x 576
+x 574
 y 8
 w 64
 h 24
@@ -1559,6 +1533,96 @@ bgColor index 0
 useDisplayBg
 value {
   "EC"
+}
+endObjectProperties
+
+# (Text Monitor)
+object activeXTextDspClass:noedit
+beginObjectProperties
+major 4
+minor 5
+release 0
+x 100
+y 624
+w 76
+h 24
+controlPv "$(DEV):ReadoutMode_RBV"
+font "helvetica-medium-r-12.0"
+fontAlign "center"
+fgColor index 15
+fgAlarm
+bgColor index 12
+limitsFromDb
+nullColor index 40
+smartRefresh
+useHexPrefix
+newPos
+objType "monitors"
+noExecuteClipMask
+endObjectProperties
+
+# (Static Text)
+object activeXTextClass
+beginObjectProperties
+major 4
+minor 1
+release 0
+x 102
+y 604
+w 72
+h 20
+font "helvetica-medium-r-12.0"
+fontAlign "center"
+fgColor index 14
+bgColor index 0
+useDisplayBg
+value {
+  "Readout"
+}
+endObjectProperties
+
+# (Text Monitor)
+object activeXTextDspClass:noedit
+beginObjectProperties
+major 4
+minor 5
+release 0
+x 192
+y 624
+w 76
+h 24
+controlPv "$(DEV):TriggerMode_RBV"
+font "helvetica-medium-r-12.0"
+fontAlign "center"
+fgColor index 15
+fgAlarm
+bgColor index 12
+limitsFromDb
+nullColor index 40
+smartRefresh
+useHexPrefix
+newPos
+objType "monitors"
+noExecuteClipMask
+endObjectProperties
+
+# (Static Text)
+object activeXTextClass
+beginObjectProperties
+major 4
+minor 1
+release 0
+x 194
+y 604
+w 72
+h 20
+font "helvetica-medium-r-12.0"
+fontAlign "center"
+fgColor index 14
+bgColor index 0
+useDisplayBg
+value {
+  "Trigger mode"
 }
 endObjectProperties
 

@@ -3,8 +3,8 @@ beginScreenProperties
 major 4
 minor 0
 release 1
-x 2200
-y 922
+x 2202
+y 948
 w 840
 h 720
 font "helvetica-medium-r-12.0"
@@ -974,7 +974,7 @@ font "helvetica-medium-r-12.0"
 fontAlign "center"
 fgColor index 35
 bgColor index 12
-visPv "CALC\\\{(A)\}($(P)$(R)Acquire)"
+visPv "CALC\\\{(A)\}($(P)$(R)Acquire_RBV)"
 visInvert
 visMin "0"
 visMax "1"
@@ -2350,29 +2350,6 @@ value {
 }
 endObjectProperties
 
-# (Static Text)
-object activeXTextClass
-beginObjectProperties
-major 4
-minor 1
-release 0
-x 704
-y 384
-w 88
-h 20
-font "helvetica-medium-r-12.0"
-fontAlign "center"
-fgColor index 35
-bgColor index 12
-visPv "CALC\\\{(A)\}($(P)$(R)AcquirePedestal)"
-visInvert
-visMin "0"
-visMax "1"
-value {
-  "Collecting"
-}
-endObjectProperties
-
 # (Message Button)
 object activeMessageButtonClass
 beginObjectProperties
@@ -2771,6 +2748,51 @@ bgColor index 0
 useDisplayBg
 value {
   "Detector querying"
+}
+endObjectProperties
+
+# (Static Text)
+object activeXTextClass
+beginObjectProperties
+major 4
+minor 1
+release 0
+x 704
+y 384
+w 88
+h 20
+font "helvetica-medium-r-12.0"
+fontAlign "center"
+fgColor index 15
+bgColor index 12
+visPv "CALC\\\{(A)\}($(P)$(R)Acquire)"
+visMin "0"
+visMax "1"
+value {
+  "Done"
+}
+endObjectProperties
+
+# (Static Text)
+object activeXTextClass
+beginObjectProperties
+major 4
+minor 1
+release 0
+x 704
+y 384
+w 88
+h 20
+font "helvetica-medium-r-12.0"
+fontAlign "center"
+fgColor index 35
+bgColor index 12
+visPv "CALC\\\{(A)\}($(P)$(R)AcquirePedestal_RBV)"
+visInvert
+visMin "0"
+visMax "1"
+value {
+  "Collecting"
 }
 endObjectProperties
 
