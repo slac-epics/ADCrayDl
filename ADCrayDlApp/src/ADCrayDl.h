@@ -18,15 +18,29 @@
 namespace adcraydl
 {
 
+/**
+ * @brief This class ensures concurrent access to a boolean variable.
+ */
 class AtomicBool
 {
 public:
+    /**
+     * @brief Construct a new Atomic Bool object
+     * 
+     * @param value Initial value.
+     */
     AtomicBool(const bool value)
         : m_value(value),
           m_mutex()
     {
     }
 
+    /**
+     * @brief Concurrent setter.
+     * 
+     * @param value The value that should be set.
+     * @return Value that was set.
+     */
     bool operator=(const bool value)
     {
         std::lock_guard<epicsMutex> lock(m_mutex);
@@ -34,12 +48,22 @@ public:
         return m_value;
     }
 
+    /**
+     * @brief Concurrent setter.
+     * 
+     * @param value The value that should be set.
+     */
     void set(const bool value)
     {
         std::lock_guard<epicsMutex> lock(m_mutex);
         m_value = value;
     }
 
+    /**
+     * @brief Concurrent getter.
+     * 
+     * @return Stored value.
+     */
     bool get()
     {
         std::lock_guard<epicsMutex> lock(m_mutex);
@@ -47,8 +71,8 @@ public:
     }
 
 private:
-    bool m_value;
-    epicsMutex m_mutex;   //!< Mutex used by the thread.
+    bool m_value;       //!< Value stored in this class.
+    epicsMutex m_mutex; //!< Mutex used by the thread.
 };
 
 /**
@@ -103,6 +127,7 @@ public:
     virtual asynStatus writeFloat64(asynUser *pasynUser, epicsFloat64 value);
 
     virtual void RawStatusChanged(const std::string &name, const std::string &value);
+    virtual void RawStatusChanged();
     virtual void ParameterChanged(const std::string &name, const std::string &value);
 
     void SequenceStarted();
@@ -196,9 +221,10 @@ private:
      */
     bool handleVacuumPV(const int function, const epicsInt32 value, asynStatus &status);
 
+    /**
+     * @brief Increases the array count by one.
+     */
     void increaseArrayCounter();
-
-    void publishingTask();
 
     std::unique_ptr<craydl::RxDetector> m_rayonixDetector; //!< SDK detector object.
     NDDimension_t m_dimsOut[NUM_DIMS]; //!< Array of dimension properties.

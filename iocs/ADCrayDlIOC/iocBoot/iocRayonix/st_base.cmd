@@ -42,9 +42,6 @@ epicsEnvSet( "EVR_TYPE",	"15" )
 
 asynSetMinTimerPeriod(0.001)
 
-# Set timeStampFifo debug level
-var DEBUG_TS_FIFO 5
-
 # The EPICS environment variable EPICS_CA_MAX_ARRAY_BYTES needs to be set to a value at least as large
 # as the largest image that the standard arrays plugin will send.
 # That vlaue is $(XSIZE) * $(YSIZE) * sizeof(FTVL data type) for the FTVL used when loading the NDStdArrays.template file.
@@ -72,7 +69,7 @@ ADCrayDlConfig("$(PORT)", 3, 0, -1)
 # DEV - prefix for all timeStampFifo records
 # PORT_PV - PV name for the camera asyn port
 # EC_PV - PV name that can be read to get the current trigger event code
-dbLoadRecords("$(TIMESTAMPFIFO)/db/timeStampFifo.template",  "DEV=$(TSS),PORT_PV=$(PREFIX)$(CAM_PREFIX)PortName_RBV,EC_PV=$(EVR):TRIG3:EC_RBV,DLY=1" )
+dbLoadRecords("$(TIMESTAMPFIFO)/db/timeStampFifo.template",  "DEV=$(TSS),PORT_PV=$(PREFIX)$(CAM_PREFIX)PortName_RBV,EC_PV=$(EVR):TRIG0:EC_RBV,DLY=1" )
 
 # Create a standard arrays plugin, set it to get data from first CrayDl driver.
 NDStdArraysConfigure("Image1", 3, 0, "$(PORT)", 0, -1)
@@ -109,6 +106,12 @@ dbpf $(PREFIX)$(CAM_PREFIX)ArrayCallbacks 1
 # dbpf $(PREFIX)$(CAM_PREFIX)Bin 10x10
 
 dbpf $(PREFIX)$(CAM_PREFIX)NumImages 10
+
+var DEBUG_TS_FIFO 5
+dbpf $(EVR):TRIG0:TEC 45
+dbpf $(EVR):TRIG0:TCTL 1
+
+
 # dbpf $(PREFIX)$(CAM_PREFIX)Acquire 1
 
 # All IOCs should dump some common info after initial startup.

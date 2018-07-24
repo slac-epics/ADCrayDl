@@ -38,7 +38,7 @@ PROD_DEPLIB_DIRS += $(RAYONIX_LIB)
 # FIXME change paths to use variables
 PROD_DEPLIB_DIRS += $(AUTOSAVE)/lib/rhel6-x86_64
 
-PROD_DEPLIB_DIRS += $(TIMESTAMPFIFO)/lib/linux-x86_64
+PROD_DEPLIB_DIRS += $(TIMESTAMPFIFO)/lib/rhel6-x86_64
 PROD_SYS_LIBS += timeStampFifo
 
 PROD_DEPLIB_DIRS += $(EVENT2)/lib/rhel6-x86_64

@@ -239,7 +239,7 @@ record(calcout, "$(P)$(R)ExpectedDelay_Calc")
 {
     #field(INPA, "$(P)$(R)CamTrigDelay_RBV CP MS") # TODO
     field(INPB, "$(P)$(R)TrigToTS_Calc CP MS")
-    field(CALC, "4.8") #A+B") # FIXME: restore
+    field(CALC, "0.105") #A+B") # FIXME: restore
     field(EGU,  "sec")
     field(PREC, "5")
     field(OUT,  "$(TSDLY_PV=$(TSS):ExpectedDelay) PP MS")

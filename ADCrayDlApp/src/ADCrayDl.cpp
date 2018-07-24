@@ -47,7 +47,7 @@ void ADCrayDl::pollDetectorStatus(const uint32_t interval_us)
             std::cerr << "Error querying status: " << status.ErrorText() << std::endl;
         }
 
-        // std::cout << "polling " << std::endl;
+        // std::cout << "polling status " << std::endl;
 
         usleep(interval_us);
     }
@@ -418,6 +418,11 @@ asynStatus ADCrayDl::writeFloat64(asynUser *pasynUser, epicsFloat64 value)
 void ADCrayDl::RawStatusChanged(const std::string &name, const std::string &value)
 {
     std::cout << "------------- raw status changed - name " << name << " value " << value << std::endl;
+}
+
+void ADCrayDl::RawStatusChanged()
+{
+    std::cout << " some status changed" << std::endl;
 }
 
 void ADCrayDl::ParameterChanged(const std::string &name, const std::string &value)
