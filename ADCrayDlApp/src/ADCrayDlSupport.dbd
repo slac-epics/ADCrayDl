@@ -1,2 +1,3 @@
 registrar("ADCrayDlRegister")
+registrar(iocshSystemCommand)
 function(GetCurrentTime)

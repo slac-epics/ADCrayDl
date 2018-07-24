@@ -219,12 +219,48 @@ record(bi, "$(P)$(R)ShutterStatus_RBV")
     field(SCAN, "I/O Intr")
 }
 
+# Timestamping records
+
+#
+# ReadoutTimes:
+#   Contains values for how long imaging takes with different binning rates.
+#   0th element = standard mode binning 1x1
+#   1st element = standard mode binning 2x2
+#   2nd element = standard mode binning 3x3
+#   3th element = standard mode binning 4x4
+#   4th element = standard mode binning 6x6
+#   5th element = standard mode binning 10x10
+#   6th element = low noise mode binning 1x1
+#   7th element = low noise mode binning 2x2
+#   8th element = low noise mode binning 3x3
+#   9th element = low noise mode binning 4x4
+#   10th element = low noise mode binning 6x6
+#   11th element = low noise mode binning 10x10
+record(waveform, "$(P)$(R)BinningAndReadoutReadoutTimes") {
+    field(NELM, "12")
+    field(FTVL, "FLOAT")
+}
+
+record(subArray, "$(P)$(R)ReadoutTime") {
+    field(INP, "$(P)$(R)BinningAndReadoutReadoutTimes CP MS")
+    field(DTYP, "Soft Channel")
+    field(MALM, "12")
+    field(NELM, "1")
+    field(FTVL, "FLOAT")
+}
+
+record(calcout, "$(P)$(R)ReadoutTimeIndexSelector") {
+    field(INPA, "$(P)$(R)Bin CP MS")
+    field(INPB, "$(P)$(R)ReadoutMode CP MS")
+    field(CALC, "6*B+A")
+    field(OUT, "$(P)$(R)ReadoutTime.INDX PP MS")
+}
+
 record(calc, "$(P)$(R)TrigToTS_Calc")
 {
     field(INPA, "$(P)$(R)AcquireTime_RBV CP MS")
-    #field(INPB, "$(P)$(R)XmitDelay CP MS") # TODO
-    #field(INPC, "$(P)$(R)DriverProcDelay CP MS") # TODO
-    field(CALC, "A+B+C")
+    field(INPB, "$(P)$(R)ReadoutTime CP MS")
+    field(CALC, "A+B")
     field(EGU,  "sec")
     field(PREC, "5")
 }
@@ -237,9 +273,8 @@ record(calc, "$(P)$(R)TrigToTS_Calc")
 #	B	- Camera trigger to timestamp delay
 record(calcout, "$(P)$(R)ExpectedDelay_Calc")
 {
-    #field(INPA, "$(P)$(R)CamTrigDelay_RBV CP MS") # TODO
-    field(INPB, "$(P)$(R)TrigToTS_Calc CP MS")
-    field(CALC, "0.105") #A+B") # FIXME: restore
+    field(INPA, "$(P)$(R)TrigToTS_Calc CP MS")
+    field(CALC, "A") #A+B") # FIXME: restore
     field(EGU,  "sec")
     field(PREC, "5")
     field(OUT,  "$(TSDLY_PV=$(TSS):ExpectedDelay) PP MS")
