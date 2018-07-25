@@ -4,7 +4,7 @@ major 4
 minor 0
 release 1
 x 521
-y 1129
+y 201
 w 840
 h 720
 font "helvetica-medium-r-12.0"
@@ -383,31 +383,6 @@ numDsps 1
 displayFileName {
   0 "edtPdvScreens/edtDiag.edl"
 }
-endObjectProperties
-
-# (Static Text)
-object activeXTextClass
-beginObjectProperties
-major 4
-minor 1
-release 0
-x 76
-y 148
-w 121
-h 13
-font "helvetica-medium-r-12.0"
-fgColor index 20
-fgAlarm
-bgColor index 0
-useDisplayBg
-alarmPv "$(P)$(R)EdtOverrun"
-visPv "$(P)$(R)EdtOverrun"
-visMin "1"
-visMax "3"
-value {
-  "Camlink Data Overrun!"
-}
-autoSize
 endObjectProperties
 
 # (Static Text)
@@ -1179,31 +1154,6 @@ useDisplayBg
 value {
   "Array counter"
 }
-endObjectProperties
-
-# (Static Text)
-object activeXTextClass
-beginObjectProperties
-major 4
-minor 1
-release 0
-x 452
-y 312
-w 121
-h 13
-font "helvetica-medium-r-12.0"
-fgColor index 20
-fgAlarm
-bgColor index 0
-useDisplayBg
-alarmPv "$(P)$(R)EdtOverrun"
-visPv "$(P)$(R)EdtOverrun"
-visMin "1"
-visMax "3"
-value {
-  "Camlink Data Overrun!"
-}
-autoSize
 endObjectProperties
 
 # (Static Text)

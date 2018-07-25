@@ -226,6 +226,14 @@ private:
      */
     void increaseArrayCounter();
 
+    /**
+     * @brief Helper method used to get the number of images to acquire.
+     * 
+     * The output of this method is passed to @ref craydl::RxDetector::SetupAcquisitionSequence().
+     * Values <= 0 indicate an infinite number of images.
+     * 
+     * @return int Number of images to acquire.
+     */
     int getNumImagesToAcquire();
 
     std::unique_ptr<craydl::RxDetector> m_rayonixDetector; //!< SDK detector object.
@@ -244,6 +252,7 @@ private:
     int IntervalTimeFunction;
     int EnableDetectorQueryingFunction;
     int BinningFunction;
+    int ShutterStatusFunction;
 
     // Cooling
     int CoolerFunction;

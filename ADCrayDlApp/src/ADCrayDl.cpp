@@ -528,15 +528,6 @@ void ADCrayDl::FrameReady(int frame_number, const craydl::RxFrame *frame_p)
 {
     applyFrameToAD(frame_p);
 
-    // double seriesPercent;
-    // int exposeFrameNumber;
-    // double percentExposed;
-    // int readoutFrameNumber;
-    // double percentRead;
-    // m_rayonixDetector->AcquisitionStatus(seriesPercent, exposeFrameNumber, percentExposed, readoutFrameNumber, percentRead);
-
-    // std::cout << "Acquisition status percentage: " << percentRead << std::endl;
-
     const int numOfFrames = getNumImagesToAcquire();
 
     if (frame_number == numOfFrames)
@@ -567,16 +558,9 @@ void ADCrayDl::FrameError(int frame_number, const craydl::RxFrame *frame_p, int 
 
 void ADCrayDl::applyFrameToAD(const craydl::RxFrame *frame_p)
 {
-    using namespace boost::posix_time;
-
-    std::cout << "Strting timestamp acq" << std::endl;
-
     // Get timestamp of frame
     epicsTimeStamp newEvrTime;
-    int status = updateTimeStamp(&newEvrTime);
-    std::cout << "Timestamp status is " << status << std::endl;
-
-    std::cout << "Current system time: " << time(0) << std::endl; 
+    updateTimeStamp(&newEvrTime);
 
     NDArray *inArray = pNDArrayPool->alloc(NUM_DIMS, m_dims, NDUInt16, frame_p->getSize(), NULL);
 
@@ -591,7 +575,7 @@ void ADCrayDl::applyFrameToAD(const craydl::RxFrame *frame_p)
     // Set timestamp
     inArray->epicsTS = newEvrTime;
 
-    std::cout << "The new timestamp is " << inArray->epicsTS.secPastEpoch << std::endl;
+    // std::cout << "The new timestamp is " << inArray->epicsTS.secPastEpoch << std::endl;
 
     increaseArrayCounter();
 
@@ -600,7 +584,6 @@ void ADCrayDl::applyFrameToAD(const craydl::RxFrame *frame_p)
     getIntegerParam(NDArrayCallbacks, &arrayCallbacks);
     if (arrayCallbacks != 0)
     {
-        // std::cout << "Calling image data callback" << std::endl;
         doCallbacksGenericPointer(inArray, NDArrayData, 0);
     }
 
@@ -639,10 +622,13 @@ void ADCrayDl::increaseArrayCounter()
 {
     int arrayCounter;
     getIntegerParam(NDArrayCounter, &arrayCounter);
-
     ++arrayCounter;
-
     setIntegerParam(NDArrayCounter, arrayCounter);
+
+    int imageCounter;
+    getIntegerParam(ADNumImagesCounter, &imageCounter);
+    ++imageCounter;
+    setIntegerParam(ADNumImagesCounter, imageCounter);
 
     /* Do callbacks so higher layers see any changes */
     callParamCallbacks();
@@ -693,6 +679,7 @@ ADCrayDl::ADCrayDl(const char *portName, NDDataType_t dataType,
     createParam(PEDESTAL_TIMESTAMP_STR,       asynParamInt32, &PedestalTimestampFunction);
     createParam(ENABLE_DETECTOR_QUERYING_STR, asynParamInt32, &EnableDetectorQueryingFunction);
     createParam(BINNING_STR,                  asynParamInt32, &BinningFunction);
+    createParam(SHUTTER_STATUS_STR,           asynParamInt32, &ShutterStatusFunction);
 
     // Cooling
     createParam(COOLER_STR,               asynParamInt32,   &CoolerFunction);
@@ -758,6 +745,7 @@ ADCrayDl::ADCrayDl(const char *portName, NDDataType_t dataType,
     status |= setIntegerParam(ADNumImages, 1);
     status |= setIntegerParam(ADNumImagesCounter, 0);
     status |= setIntegerParam(ADTriggerMode, TriggerModeFreeRun);
+    status |= setIntegerParam(NDBitsPerPixel, 16);
 
     // Set defaults of custom parameters
     status |= setIntegerParam(AcquirePedestalFunction, 0);
@@ -832,6 +820,12 @@ static void ADCrayDlRegister(void)
     iocshRegister(&configADCrayDl, configADCrayDlCallFunc);
 }
 
+/**
+ * @brief Subroutine used to get the current unix timestamp into EPICS.
+ * 
+ * @param precord The sub record.
+ * @return int Always returns 0.
+ */
 static int GetCurrentTime(subRecord *precord)
 {
     precord->val = time(0);
