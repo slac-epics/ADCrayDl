@@ -532,8 +532,6 @@ void ADCrayDl::FrameReady(int frame_number, const craydl::RxFrame *frame_p)
 
     if (frame_number == numOfFrames)
     {
-        std::cout << "Reached end of acquisition" << std::endl;
-
         setIntegerParam(ADAcquire, 0);
 
         /* Do callbacks so higher layers see any changes */

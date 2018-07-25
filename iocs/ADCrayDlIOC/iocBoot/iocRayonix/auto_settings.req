@@ -1,2 +1,2 @@
 file "ADCrayDl_settings.req",    P=$(P),  R=cam1:
-file "NDStdArrays_settings.req",    P=$(P),  R=image1:
+file "NDStdArrays_settings.req",    P=$(P),  R=cam1:IMAGE2:

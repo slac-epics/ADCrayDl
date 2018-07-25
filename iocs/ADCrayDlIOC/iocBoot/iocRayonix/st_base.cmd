@@ -102,13 +102,8 @@ create_monitor_set("auto_settings.req", 10, "P=$(PREFIX),IOC=$(PREFIX)$(CAM_PREF
 system "caput -a $(PREFIX)$(CAM_PREFIX)BinningAndReadoutReadoutTimes 12 0.424 0.12 0.061 0.0381 0.021 0.0112 0.5347 0.1467 0.0737 0.0449 0.024 0.0121"
 
 dbpf $(TSS):TsPolicy SYNCED
-# dbpf $(TSS):TsFreeRun 1
 
 dbpf $(PREFIX)$(CAM_PREFIX)ArrayCallbacks 1
-
-# dbpf $(PREFIX)$(CAM_PREFIX)Bin 10x10
-
-dbpf $(PREFIX)$(CAM_PREFIX)NumImages 10
 
 var DEBUG_TS_FIFO 5
 dbpf $(EVR):TRIG0:TEC 45
