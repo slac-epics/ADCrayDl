@@ -274,7 +274,7 @@ record(calc, "$(P)$(R)TrigToTS_Calc")
 record(calcout, "$(P)$(R)ExpectedDelay_Calc")
 {
     field(INPA, "$(P)$(R)TrigToTS_Calc CP MS")
-    field(CALC, "A") #A+B") # FIXME: restore
+    field(CALC, "A")
     field(EGU,  "sec")
     field(PREC, "5")
     field(OUT,  "$(TSDLY_PV=$(TSS):ExpectedDelay) PP MS")

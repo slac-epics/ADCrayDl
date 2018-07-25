@@ -226,6 +226,8 @@ private:
      */
     void increaseArrayCounter();
 
+    int getNumImagesToAcquire();
+
     std::unique_ptr<craydl::RxDetector> m_rayonixDetector; //!< SDK detector object.
     NDDimension_t m_dimsOut[NUM_DIMS]; //!< Array of dimension properties.
     size_t m_dims[NUM_DIMS];           //!< Array of dimension sizes.

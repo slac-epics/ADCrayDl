@@ -144,6 +144,25 @@ bool ADCrayDl::handleVacuumPV(const int function, const epicsInt32 value, asynSt
     return false;
 }
 
+int ADCrayDl::getNumImagesToAcquire()
+{
+    int imageMode;
+    getIntegerParam(ADImageMode, &imageMode);
+
+    switch (imageMode)
+    {
+        case ADImageSingle:
+            return 1;
+        
+        case ADImageContinuous:
+            return 0; // This means that the detector should just keep going.
+
+        case ADImageMultiple:
+        default:
+            return m_numImages;
+    }
+}
+
 /** Called when asyn clients call pasynInt32->write().
   * This function performs actions for some parameters, including ADAcquire, ADColorMode, etc.
   * For all parameters it sets the value in the parameter library and calls any registered callbacks..
@@ -170,10 +189,11 @@ asynStatus ADCrayDl::writeInt32(asynUser *pasynUser, epicsInt32 value)
         {
             do // This do-while is a convenient solution to error handling. We can jump out of the block early.
             {
-                craydl::RxReturnStatus error = m_rayonixDetector->SetupAcquisitionSequence(m_numImages, 1);
+                craydl::RxReturnStatus error = m_rayonixDetector->SetupAcquisitionSequence(getNumImagesToAcquire());
                 if (error.IsError())
                 {
                     std::cerr << "Could not setup acquisition sequence to " << m_numImages << " images" << std::endl;
+                    status = asynError;
                     continue; // Skip other code.
                 }
 
@@ -181,6 +201,7 @@ asynStatus ADCrayDl::writeInt32(asynUser *pasynUser, epicsInt32 value)
                 if (error.IsError())
                 {
                     std::cerr << "Could not send parameters to detector" << std::endl;
+                    status = asynError;
                     continue; // Skip other code.
                 }
 
@@ -190,9 +211,22 @@ asynStatus ADCrayDl::writeInt32(asynUser *pasynUser, epicsInt32 value)
                 if (error.IsError())
                 {
                     std::cerr << "Could not start acquisition" << std::endl;
+                    status = asynError;
                     continue; // Skip other code.
                 }
             } while (false);
+        }
+        else
+        {
+            // Stop acquisition
+            craydl::RxReturnStatus error = m_rayonixDetector->EndAcquisition(true);
+            if (error.IsError())
+            {
+                std::cerr << "Could not end acquisition" << std::endl;
+                status = asynError;
+            }
+
+            setIntegerParam(ADAcquire, 0);
         }
     }
     else if (function == ADNumImages)
@@ -488,20 +522,27 @@ void ADCrayDl::BackgroundFrameReady(const craydl::RxFrame *frame_p)
 void ADCrayDl::RawFrameReady(int frame_number, const craydl::RxFrame *frame_p)
 {
     // Intentionally empty.
-    applyFrameToAD(frame_p);
 }
 
 void ADCrayDl::FrameReady(int frame_number, const craydl::RxFrame *frame_p)
 {
-    double seriesPercent;
-    int exposeFrameNumber;
-    double percentExposed;
-    int readoutFrameNumber;
-    double percentRead;
-    m_rayonixDetector->AcquisitionStatus(seriesPercent, exposeFrameNumber, percentExposed, readoutFrameNumber, percentRead);
+    applyFrameToAD(frame_p);
 
-    if (percentRead == 100.0)
+    // double seriesPercent;
+    // int exposeFrameNumber;
+    // double percentExposed;
+    // int readoutFrameNumber;
+    // double percentRead;
+    // m_rayonixDetector->AcquisitionStatus(seriesPercent, exposeFrameNumber, percentExposed, readoutFrameNumber, percentRead);
+
+    // std::cout << "Acquisition status percentage: " << percentRead << std::endl;
+
+    const int numOfFrames = getNumImagesToAcquire();
+
+    if (frame_number == numOfFrames)
     {
+        std::cout << "Reached end of acquisition" << std::endl;
+
         setIntegerParam(ADAcquire, 0);
 
         /* Do callbacks so higher layers see any changes */
@@ -602,6 +643,9 @@ void ADCrayDl::increaseArrayCounter()
     ++arrayCounter;
 
     setIntegerParam(NDArrayCounter, arrayCounter);
+
+    /* Do callbacks so higher layers see any changes */
+    callParamCallbacks();
 }
 
 static DBADDR getPVAddr(const char *evName)
