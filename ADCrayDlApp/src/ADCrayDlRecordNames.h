@@ -7,13 +7,14 @@ namespace adcraydl
 /*
  * Driver acquisition records.
  */
-static const char *READOUT_MODE_STR             = "Craydl_ReadoutMode";
-static const char *ACQUIRE_PEDESTAL_STR         = "AcquirePedestal";
-static const char *PEDESTAL_NUM_IMG_STR         = "PedestalNumImages";
-static const char *PEDESTAL_TIMESTAMP_STR       = "PedestalTimestamp";
-static const char *SHUTTER_STATUS_STR           = "ShutterStatus";
-static const char *ENABLE_DETECTOR_QUERYING_STR = "EnableDetectorQuerying";
-static const char *BINNING_STR                  = "Binning";
+static const char *READOUT_MODE_STR              = "Craydl_ReadoutMode";
+static const char *ACQUIRE_PEDESTAL_STR          = "AcquirePedestal";
+static const char *PEDESTAL_NUM_IMG_STR          = "PedestalNumImages";
+static const char *PEDESTAL_TIMESTAMP_STR        = "PedestalTimestamp";
+static const char *STRING_PEDESTAL_TIMESTAMP_STR = "StringPedestalTimestamp";
+static const char *SHUTTER_STATUS_STR            = "ShutterStatus";
+static const char *ENABLE_DETECTOR_QUERYING_STR  = "EnableDetectorQuerying";
+static const char *BINNING_STR                   = "Binning";
 
 /*
  * Cooling records.

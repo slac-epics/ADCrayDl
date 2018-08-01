@@ -31,7 +31,8 @@ namespace
 {
     static const char *DRIVER_NAME = "ADCrayDl";
     static const useconds_t POLLING_INTERVAL_US = 1e6; // 1 second
-    static const boost::posix_time::ptime EPOCH(boost::gregorian::date(1970, 1, 1));
+    static const boost::posix_time::ptime EPICS_EPOCH(boost::gregorian::date(1990, 1, 1));
+    static const char *TIMESTAMP_FORMAT = "%a %b %d %Y %H:%M:%S";
 }
 
 namespace adcraydl
@@ -46,8 +47,6 @@ void ADCrayDl::pollDetectorStatus(const uint32_t interval_us)
         {
             std::cerr << "Error querying status: " << status.ErrorText() << std::endl;
         }
-
-        // std::cout << "polling status " << std::endl;
 
         usleep(interval_us);
     }
@@ -73,11 +72,6 @@ bool ADCrayDl::handleCoolingPV(const int function, const epicsInt32 value, asynS
             std::cerr << "Error " << command << " cooler: " << error.ErrorText() << std::endl;
 
             status = asynError;
-        }
-        else
-        {
-            const std::string command = (value == 0) ? "disabled" : "enabled";
-            std::cout << "!!!! Successfully " << command << " cooler" << std::endl;
         }
 
         return true;
@@ -118,28 +112,28 @@ bool ADCrayDl::handleCoolingPV(const int function, const epicsFloat64 value, asy
 
 bool ADCrayDl::handleVacuumPV(const int function, const epicsInt32 value, asynStatus &status)
 {
-    if (function == VacuumValveFunction)
-    {
-        craydl::RxReturnStatus error;
+    // if (function == VacuumValveFunction)
+    // {
+    //     craydl::RxReturnStatus error;
 
-        if (value == 0)
-        {
-            error = m_rayonixDetector->DisableVacuumValve();
-        }
-        else
-        {
-            error = m_rayonixDetector->EnableVacuumValve();
-        }
+    //     if (value == 0)
+    //     {
+    //         error = m_rayonixDetector->DisableVacuumValve();
+    //     }
+    //     else
+    //     {
+    //         error = m_rayonixDetector->EnableVacuumValve();
+    //     }
 
-        if (error.IsError())
-        {
-            const std::string command = (value == 0) ? "disabling" : "enabling";
-            std::cerr << "Error " << command << " vacuum valve: " << error.ErrorText() << std::endl;
-            status = asynError;
-        }
+    //     if (error.IsError())
+    //     {
+    //         const std::string command = (value == 0) ? "disabling" : "enabling";
+    //         std::cerr << "Error " << command << " vacuum valve: " << error.ErrorText() << std::endl;
+    //         status = asynError;
+    //     }
 
-        return true;
-    }
+    //     return true;
+    // }
 
     return false;
 }
@@ -147,7 +141,12 @@ bool ADCrayDl::handleVacuumPV(const int function, const epicsInt32 value, asynSt
 int ADCrayDl::getNumImagesToAcquire()
 {
     int imageMode;
-    getIntegerParam(ADImageMode, &imageMode);
+    const int status = getIntegerParam(ADImageMode, &imageMode);
+
+    if (status != 0)
+    {
+        throw std::runtime_error("Error getting ADImageMode parameter.");
+    }
 
     switch (imageMode)
     {
@@ -449,19 +448,89 @@ asynStatus ADCrayDl::writeFloat64(asynUser *pasynUser, epicsFloat64 value)
     return status;
 }
 
-void ADCrayDl::RawStatusChanged(const std::string &name, const std::string &value)
+void ADCrayDl::VirtualStatusChanged(const craydl::VStatusParameter *vstatus)
 {
-    std::cout << "------------- raw status changed - name " << name << " value " << value << std::endl;
+    // Conversion from string to double will throw an exception if the conversion isn't successful.
+    switch (vstatus->key())
+    {
+        case craydl::StatusParameterSensorTemperatureMin:
+            setDoubleParam(MinSensorTempFunction, std::stod(vstatus->value()));
+            break;
+
+        case craydl::StatusParameterSensorTemperatureMax:
+            setDoubleParam(MaxSensorTempFunction, std::stod(vstatus->value()));
+            break;
+
+        case craydl::StatusParameterSensorTemperatureAve:
+            setDoubleParam(MeanSensorTempFunction, std::stod(vstatus->value()));
+            break;
+
+        case craydl::StatusParameterColdHeadTemperatureMin:
+            setDoubleParam(MinCoolerTempFunction, std::stod(vstatus->value()));
+            break;
+
+        case craydl::StatusParameterColdHeadTemperatureMax:
+            setDoubleParam(MaxCoolerTempFunction, std::stod(vstatus->value()));
+            break;
+
+        case craydl::StatusParameterColdHeadTemperatureAve:
+            setDoubleParam(MeanCoolerTempFunction, std::stod(vstatus->value()));
+            break;
+
+        case craydl::StatusParameterLinePressure:
+            setDoubleParam(LinePressureFunction, std::stod(vstatus->value()));
+            break;
+
+        case craydl::StatusParameterChamberPressure:
+            setDoubleParam(ChamberPressureFunction, std::stod(vstatus->value()));
+            break;
+
+        default:
+            // Do nothing.
+            break;
+    }
+
+    callParamCallbacks();
 }
 
-void ADCrayDl::RawStatusChanged()
+void ADCrayDl::StatusFlagChanged(const craydl::VStatusFlag *vstatus)
 {
-    std::cout << " some status changed" << std::endl;
-}
+    switch (vstatus->key())
+    {
+        case craydl::StatusFlagCoolersEnabled:
+            setIntegerParam(CoolerEnabledFunction, vstatus->value());
+            break;
 
-void ADCrayDl::ParameterChanged(const std::string &name, const std::string &value)
-{
-    std::cout << "------------- parameter changed - name " << name << " value " << value << std::endl;
+        case craydl::StatusFlagCoolersRunning:
+            setIntegerParam(CoolerRunningFunction, vstatus->value());
+            break;
+
+        case craydl::StatusFlagVacuumValveOpen:
+            setIntegerParam(VacuumValveOpenFunction, vstatus->value());
+            break;
+
+        case craydl::StatusFlagVacuumValveEnabled:
+            setIntegerParam(VacuumValveEnabledFunction, vstatus->value());
+            break;
+
+        case craydl::StatusFlagVacuumPumpRunning:
+            setIntegerParam(VacuumPumpRunningFunction, vstatus->value());
+            break;
+
+        case craydl::StatusFlagVacuumPumpIgnored:
+            setIntegerParam(VacuumPumpIgnoredFunction, vstatus->value());
+            break;
+
+        case craydl::StatusFlagOSShutterOpen:
+            setIntegerParam(ShutterStatusFunction, vstatus->value());
+            break;
+
+        default:
+            // Do nothing.
+            break;
+    }
+
+    callParamCallbacks();
 }
 
 void ADCrayDl::SequenceStarted()
@@ -494,11 +563,11 @@ void ADCrayDl::ReadoutEnded(int frame_number)
     // Intentionally empty.
 }
 
-static time_t toUnixTimestamp(const boost::posix_time::ptime &pt)
+static time_t toEpicsTimestamp(const boost::posix_time::ptime &pt)
 {
     using namespace boost::posix_time;
 
-    time_duration diff(pt - EPOCH);
+    time_duration diff(pt - EPICS_EPOCH);
     const time_t localTime = (diff.ticks() / diff.ticks_per_second());
 
     std::tm local_field = *std::gmtime(&localTime);
@@ -508,13 +577,37 @@ static time_t toUnixTimestamp(const boost::posix_time::ptime &pt)
     return utc;
 }
 
+static std::string timestampToString(const time_t timestamp)
+{
+    char timeString[32];
+
+    const epicsTimeStamp stamp = { static_cast<epicsUInt32>(timestamp), 0 };
+    epicsTimeToStrftime(timeString, sizeof(timeString), TIMESTAMP_FORMAT, &stamp);
+
+    return std::string(timeString);
+}
+
 void ADCrayDl::BackgroundFrameReady(const craydl::RxFrame *frame_p)
 {
     // Handle pedestals
     const craydl::FrameMetaData &metadata = frame_p->metaData();
-    setIntegerParam(PedestalTimestampFunction, toUnixTimestamp(metadata.AcquisitionStartTimestamp()));
 
-    setIntegerParam(AcquirePedestalFunction, 0);
+    const time_t timestamp = toEpicsTimestamp(metadata.AcquisitionStartTimestamp());
+    int status = setIntegerParam(PedestalTimestampFunction, timestamp);
+
+    status |= setStringParam(StringPedestalTimestampFunction, timestampToString(timestamp));
+
+    if (status != 0)
+    {
+        throw std::runtime_error("Error setting pedestal timestamp.");
+    }
+
+    status = setIntegerParam(AcquirePedestalFunction, 0);
+
+    if (status != 0)
+    {
+        throw std::runtime_error("Error resetting AcquirePedestal PV.");
+    }
 
     callParamCallbacks();
 }
@@ -632,6 +725,23 @@ void ADCrayDl::increaseArrayCounter()
     callParamCallbacks();
 }
 
+void ADCrayDl::registerAllStatusCallbacks()
+{
+    const std::set<craydl::VStatusParameter*> statusSet = m_rayonixDetector->SupportedStatusSet();
+
+    for (std::set<craydl::VStatusParameter*>::const_iterator si = statusSet.begin(); si != statusSet.end(); si++)
+    {
+        m_rayonixDetector->RegisterStateChangeCallback(*si, this);
+    }
+
+    const std::set<craydl::VStatusFlag*> statusFlagSet = m_rayonixDetector->SupportedStatusFlagSet();
+
+    for (std::set<craydl::VStatusFlag*>::const_iterator si = statusFlagSet.begin(); si != statusFlagSet.end(); si++)
+    {
+        m_rayonixDetector->RegisterStateChangeCallback(*si, this);
+    }
+}
+
 static DBADDR getPVAddr(const char *evName)
 {
     DBADDR addr;
@@ -671,13 +781,14 @@ ADCrayDl::ADCrayDl(const char *portName, NDDataType_t dataType,
     const char *functionName = "ADCrayDl";
 
     // Create custom parameters
-    createParam(ACQUIRE_PEDESTAL_STR,         asynParamInt32, &AcquirePedestalFunction);
-    createParam(READOUT_MODE_STR,             asynParamInt32, &ReadoutModeFunction);
-    createParam(PEDESTAL_NUM_IMG_STR,         asynParamInt32, &PedestalNumImagesFunction);
-    createParam(PEDESTAL_TIMESTAMP_STR,       asynParamInt32, &PedestalTimestampFunction);
-    createParam(ENABLE_DETECTOR_QUERYING_STR, asynParamInt32, &EnableDetectorQueryingFunction);
-    createParam(BINNING_STR,                  asynParamInt32, &BinningFunction);
-    createParam(SHUTTER_STATUS_STR,           asynParamInt32, &ShutterStatusFunction);
+    createParam(ACQUIRE_PEDESTAL_STR,          asynParamInt32, &AcquirePedestalFunction);
+    createParam(READOUT_MODE_STR,              asynParamInt32, &ReadoutModeFunction);
+    createParam(PEDESTAL_NUM_IMG_STR,          asynParamInt32, &PedestalNumImagesFunction);
+    createParam(PEDESTAL_TIMESTAMP_STR,        asynParamInt32, &PedestalTimestampFunction);
+    createParam(STRING_PEDESTAL_TIMESTAMP_STR, asynParamOctet, &StringPedestalTimestampFunction);
+    createParam(ENABLE_DETECTOR_QUERYING_STR,  asynParamInt32, &EnableDetectorQueryingFunction);
+    createParam(BINNING_STR,                   asynParamInt32, &BinningFunction);
+    createParam(SHUTTER_STATUS_STR,            asynParamInt32, &ShutterStatusFunction);
 
     // Cooling
     createParam(COOLER_STR,               asynParamInt32,   &CoolerFunction);
@@ -693,7 +804,7 @@ ADCrayDl::ADCrayDl(const char *portName, NDDataType_t dataType,
     createParam(COOLER_RUNNING_STR,       asynParamInt32,   &CoolerRunningFunction);
 
     // Vacuum
-    createParam(VACUUM_VALVE_STR,         asynParamInt32,   &VacuumValveFunction);
+    // createParam(VACUUM_VALVE_STR,         asynParamInt32,   &VacuumValveFunction);
     createParam(LINE_PRESSURE_STR,        asynParamFloat64, &LinePressureFunction);
     createParam(CHAMBER_PRESSURE_STR,     asynParamFloat64, &ChamberPressureFunction);
     createParam(VACUUM_VALVE_OPEN_STR,    asynParamInt32,   &VacuumValveOpenFunction);
@@ -709,7 +820,6 @@ ADCrayDl::ADCrayDl(const char *portName, NDDataType_t dataType,
 
     // Set callback on detector.
     m_rayonixDetector->RegisterFrameCallback(this);
-    m_rayonixDetector->RegisterEveryStatusChangeCallback(this);
 
     m_rayonixDetector->SetBackgroundFrameTriggerMode(craydl::FrameTriggerType(craydl::FrameTriggerTypeNone));
     m_rayonixDetector->SetFrameTriggerMode(craydl::FrameTriggerType(craydl::FrameTriggerTypeNone));
@@ -750,7 +860,9 @@ ADCrayDl::ADCrayDl(const char *portName, NDDataType_t dataType,
     status |= setIntegerParam(ReadoutModeFunction, ReadoutModeStandard);
     status |= setIntegerParam(PedestalNumImagesFunction, 1);
     status |= setIntegerParam(PedestalTimestampFunction, 0);
-    status |= setIntegerParam(CoolerFunction, 0);
+
+    /* Do callbacks so higher layers see any changes */
+    callParamCallbacks();
 
     m_rayonixDetector->SendParameters();
 
@@ -762,12 +874,17 @@ ADCrayDl::ADCrayDl(const char *portName, NDDataType_t dataType,
         return;
     }
 
+    status |= setDoubleParam(CCDTempSetpointFunction, m_rayonixDetector->SensorTemperatureSetpoint());
+    status |= setDoubleParam(CoolerTempSetpointFunction, m_rayonixDetector->ColdHeadTemperatureSetpoint());
+
     if (status)
     {
         printf("%s:%s epicsThreadCreate failure for image task\n",
             DRIVER_NAME, functionName);
         return;
     }
+
+    registerAllStatusCallbacks();
 }
 
 ADCrayDl::~ADCrayDl()
@@ -818,23 +935,9 @@ static void ADCrayDlRegister(void)
     iocshRegister(&configADCrayDl, configADCrayDlCallFunc);
 }
 
-/**
- * @brief Subroutine used to get the current unix timestamp into EPICS.
- * 
- * @param precord The sub record.
- * @return int Always returns 0.
- */
-static int GetCurrentTime(subRecord *precord)
-{
-    precord->val = time(0);
-
-    return 0;
-}
-
 extern "C"
 {
-epicsExportRegistrar(ADCrayDlRegister);
-epicsRegisterFunction(GetCurrentTime);
+    epicsExportRegistrar(ADCrayDlRegister);
 }
 
 } // namespace adcraydl

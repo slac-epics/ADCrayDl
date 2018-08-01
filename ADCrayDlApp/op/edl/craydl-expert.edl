@@ -3,10 +3,10 @@ beginScreenProperties
 major 4
 minor 0
 release 1
-x 521
-y 201
+x 775
+y 837
 w 840
-h 720
+h 750
 font "helvetica-medium-r-12.0"
 ctlFont "helvetica-medium-r-12.0"
 btnFont "helvetica-medium-r-12.0"
@@ -557,7 +557,7 @@ major 4
 minor 5
 release 0
 x 600
-y 692
+y 720
 w 188
 h 20
 controlPv "$(IOC):TOD"
@@ -1053,7 +1053,7 @@ major 4
 minor 0
 release 0
 x 416
-y 528
+y 556
 w 400
 h 152
 lineColor index 3
@@ -1068,7 +1068,7 @@ major 4
 minor 1
 release 0
 x 416
-y 516
+y 544
 w 80
 h 20
 font "helvetica-bold-r-12.0"
@@ -1087,7 +1087,7 @@ major 4
 minor 3
 release 0
 x 688
-y 656
+y 684
 w 120
 h 20
 fgColor index 14
@@ -1696,7 +1696,7 @@ major 4
 minor 5
 release 0
 x 668
-y 568
+y 596
 w 92
 h 20
 controlPv "$(P)$(R)TSS:SyncStatus"
@@ -1721,7 +1721,7 @@ major 4
 minor 1
 release 0
 x 432
-y 568
+y 596
 w 120
 h 20
 font "helvetica-medium-r-12.0"
@@ -1741,7 +1741,7 @@ major 4
 minor 1
 release 0
 x 432
-y 544
+y 572
 w 120
 h 20
 font "helvetica-medium-r-12.0"
@@ -1761,7 +1761,7 @@ major 4
 minor 5
 release 0
 x 560
-y 544
+y 572
 w 64
 h 20
 controlPv "$(P)$(R)TSS:EventCode_RBV"
@@ -1787,7 +1787,7 @@ major 4
 minor 0
 release 0
 x 560
-y 568
+y 596
 w 100
 h 20
 fgColor index 25
@@ -1894,7 +1894,7 @@ release 0
 x 416
 y 400
 w 400
-h 104
+h 132
 lineColor index 3
 fill
 fillColor index 3
@@ -2241,9 +2241,9 @@ beginObjectProperties
 major 4
 minor 1
 release 0
-x 36
+x 8
 y 396
-w 120
+w 148
 h 20
 font "helvetica-medium-r-12.0"
 fontAlign "right"
@@ -2251,7 +2251,7 @@ fgColor index 14
 bgColor index 0
 useDisplayBg
 value {
-  "Shutter status"
+  "External shutter status"
 }
 endObjectProperties
 
@@ -2372,7 +2372,7 @@ major 4
 minor 0
 release 0
 x 436
-y 596
+y 624
 w 336
 h 48
 
@@ -2385,7 +2385,7 @@ major 4
 minor 1
 release 0
 x 676
-y 624
+y 652
 w 28
 h 20
 font "helvetica-medium-r-12.0"
@@ -2405,7 +2405,7 @@ major 4
 minor 5
 release 0
 x 712
-y 624
+y 652
 w 60
 h 20
 controlPv "$(P)$(R)TSS:DiffVsExpMax"
@@ -2431,7 +2431,7 @@ major 4
 minor 5
 release 0
 x 608
-y 624
+y 652
 w 64
 h 20
 controlPv "$(P)$(R)TSS:DiffVsExpMin"
@@ -2457,7 +2457,7 @@ major 4
 minor 1
 release 0
 x 572
-y 624
+y 652
 w 24
 h 20
 font "helvetica-medium-r-12.0"
@@ -2477,7 +2477,7 @@ major 4
 minor 5
 release 0
 x 504
-y 624
+y 652
 w 60
 h 20
 controlPv "$(P)$(R)TSS:DiffVsExp"
@@ -2503,7 +2503,7 @@ major 4
 minor 1
 release 0
 x 436
-y 624
+y 652
 w 60
 h 20
 font "helvetica-medium-r-12.0"
@@ -2523,7 +2523,7 @@ major 4
 minor 1
 release 0
 x 436
-y 596
+y 624
 w 96
 h 20
 font "helvetica-medium-r-12.0"
@@ -2542,7 +2542,7 @@ major 4
 minor 5
 release 0
 x 528
-y 596
+y 624
 w 92
 h 20
 controlPv "$(P)$(R)TSS:ExpectedDelay"
@@ -2652,5 +2652,30 @@ offLabel "Stop"
 3d
 useEnumNumeric
 font "helvetica-medium-r-14.0"
+endObjectProperties
+
+# (Text Monitor)
+object activeXTextDspClass:noedit
+beginObjectProperties
+major 4
+minor 5
+release 0
+x 608
+y 496
+w 184
+h 20
+controlPv "$(P)$(R)StringPedestalTimestamp_RBV"
+font "helvetica-medium-r-12.0"
+fontAlign "center"
+fgColor index 15
+fgAlarm
+bgColor index 12
+limitsFromDb
+nullColor index 40
+smartRefresh
+useHexPrefix
+newPos
+objType "monitors"
+noExecuteClipMask
 endObjectProperties
 

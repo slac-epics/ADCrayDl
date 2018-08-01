@@ -292,11 +292,20 @@ record(longin, "$(P)$(R)PedestalTimestamp_RBV")
     field(DISV, "-1")
 }
 
-record(sub, "$(P)$(R)NowTS_RBV")
+record(stringin, "$(P)$(R)StringPedestalTimestamp_RBV")
+{
+    field(DTYP, "asynOctetRead")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))StringPedestalTimestamp")
+    field(SCAN, "I/O Intr")
+    # field(SDIS, "$(P)$(R)IsPedestalTimestampAlarm NPP MS")
+    # field(DISV, "-1")
+}
+
+record(ai, "$(P)$(R)NowTS_RBV")
 {
     field(SCAN, "Passive")
+    field(DTYP, "Soft Timestamp")
     field(EGU,  "s")
-    field(SNAM, "GetCurrentTime")
 }
 
 record(calc, "$(P)$(R)IsPedestalTimestampAlarm")
@@ -311,30 +320,30 @@ record(calc, "$(P)$(R)IsPedestalTimestampAlarm")
 
 # Vacuum records
 
-record(bo, "$(P)$(R)VacuumValve")
-{
-    field(PINI, "NO")
-    field(DTYP, "asynInt32")
-    field(OUT,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))VacuumValve")
-    field(ZNAM, "Off")
-    field(ONAM, "On")
-    field(ZSV,  "MAJOR")
-    field(OSV,  "NO_ALARM")
-    field(VAL,  "0")
-    info(autosaveFields, "VAL")
-    info(asyn:READBACK, "1")
-}
+# record(bo, "$(P)$(R)VacuumValve")
+# {
+#     field(PINI, "NO")
+#     field(DTYP, "asynInt32")
+#     field(OUT,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))VacuumValve")
+#     field(ZNAM, "Off")
+#     field(ONAM, "On")
+#     field(ZSV,  "MAJOR")
+#     field(OSV,  "NO_ALARM")
+#     field(VAL,  "0")
+#     info(autosaveFields, "VAL")
+#     info(asyn:READBACK, "1")
+# }
 
-record(bi, "$(P)$(R)VacuumValve_RBV")
-{
-    field(DTYP, "asynInt32")
-    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))VacuumValve")
-    field(ZNAM, "Off")
-    field(ONAM, "On")
-    field(ZSV,  "MAJOR")
-    field(OSV,  "NO_ALARM")
-    field(SCAN, "I/O Intr")
-}
+# record(bi, "$(P)$(R)VacuumValve_RBV")
+# {
+#     field(DTYP, "asynInt32")
+#     field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))VacuumValve")
+#     field(ZNAM, "Off")
+#     field(ONAM, "On")
+#     field(ZSV,  "MAJOR")
+#     field(OSV,  "NO_ALARM")
+#     field(SCAN, "I/O Intr")
+# }
 
 record(ai, "$(P)$(R)LinePressure_RBV")
 {

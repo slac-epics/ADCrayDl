@@ -126,9 +126,8 @@ public:
      */
     virtual asynStatus writeFloat64(asynUser *pasynUser, epicsFloat64 value);
 
-    virtual void RawStatusChanged(const std::string &name, const std::string &value);
-    virtual void RawStatusChanged();
-    virtual void ParameterChanged(const std::string &name, const std::string &value);
+    virtual void VirtualStatusChanged(const craydl::VStatusParameter *vstatus);
+    virtual void StatusFlagChanged(const craydl::VStatusFlag *vstatus);
 
     void SequenceStarted();
     void SequenceEnded();
@@ -236,6 +235,8 @@ private:
      */
     int getNumImagesToAcquire();
 
+    void registerAllStatusCallbacks();
+
     std::unique_ptr<craydl::RxDetector> m_rayonixDetector; //!< SDK detector object.
     NDDimension_t m_dimsOut[NUM_DIMS]; //!< Array of dimension properties.
     size_t m_dims[NUM_DIMS];           //!< Array of dimension sizes.
@@ -249,6 +250,7 @@ private:
     int ReadoutModeFunction;
     int PedestalNumImagesFunction;
     int PedestalTimestampFunction;
+    int StringPedestalTimestampFunction;
     int IntervalTimeFunction;
     int EnableDetectorQueryingFunction;
     int BinningFunction;
@@ -268,8 +270,7 @@ private:
     int CoolerRunningFunction;
 
     // Vacuum
-    int VacuumValveFunction;
-    int IgnoreVacuumPumpFunction;
+    // int VacuumValveFunction;
     int LinePressureFunction;
     int ChamberPressureFunction;
     int VacuumValveOpenFunction;
