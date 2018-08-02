@@ -1,3 +1,11 @@
+/**
+ * @brief This file contains the class definition for the ADCrayDl and AtomicBool classes.
+ * 
+ * @file ADCrayDl.h
+ * @author Domen Soklic (domen.soklic@cosylab.com)
+ * @date 2018-08-02
+ */
+
 #ifndef ADCRAYDL_H
 #define ADCRAYDL_H
 
@@ -84,14 +92,7 @@ class epicsShareClass ADCrayDl : public ADDriver,
 {
 public:
     /**
-     * @brief Construct a new ADCrayDl object
-     * 
-     * @param portName 
-     * @param dataType 
-     * @param maxBuffers 
-     * @param maxMemory 
-     * @param priority 
-     * @param stackSize 
+     * @brief Construct a new ADCrayDl object.
      */
     ADCrayDl(const char *portName, NDDataType_t dataType,
                 int maxBuffers, size_t maxMemory,
@@ -126,20 +127,103 @@ public:
      */
     virtual asynStatus writeFloat64(asynUser *pasynUser, epicsFloat64 value);
 
+    /**
+     * @brief Called when a virtual status changes (e.g. detector temperature).
+     * 
+     * @param vstatus The virtual status that changed.
+     */
     virtual void VirtualStatusChanged(const craydl::VStatusParameter *vstatus);
+
+    /**
+     * @brief Called when a status flag changes (e.g. cooler turned on).
+     * 
+     * @param vstatus The status flag that changed.
+     */
     virtual void StatusFlagChanged(const craydl::VStatusFlag *vstatus);
 
+    /**
+     * @brief Executes when acquisition sequence starts.
+     */
     void SequenceStarted();
+
+    /**
+     * @brief Executes when acquisition sequence ends.
+     */
     void SequenceEnded();
+
+    /**
+     * @brief Executes when exposure starts.
+     * 
+     * @param frame_number Number of the frame that exposure started for.
+     */
     void ExposureStarted(int frame_number);
+
+    /**
+     * @brief Executes when exposure ends.
+     * 
+     * @param frame_number Number of the frame that exposure ended for.
+     */
     void ExposureEnded(int frame_number);
+
+    /**
+     * @brief Executes when readout starts.
+     * 
+     * @param frame_number Number of the frame that readout started for.
+     */
     void ReadoutStarted(int frame_number);
+
+    /**
+     * @brief Executes when readout ends.
+     * 
+     * @param frame_number Number of the frame that readout ended for.
+     */
     void ReadoutEnded(int frame_number);
+
+    /**
+     * @brief Executes when the background frame is ready.
+     * 
+     * @param frame_p Acquired background frame.
+     */
     void BackgroundFrameReady(const craydl::RxFrame *frame_p);
+
+    /**
+     * @brief Executes when raw frame data is ready for further processing after readout.
+     * 
+     * @param frame_number Number of the raw frame.
+     * @param frame_p Acquired raw frame.
+     */
     void RawFrameReady(int frame_number, const craydl::RxFrame *frame_p);
+
+    /**
+     * @brief Executes when final (corrected) frame data is ready for access after readout.
+     * 
+     * @param frame_number Number of the frame.
+     * @param frame_p Acquired frame.
+     */
     void FrameReady(int frame_number, const craydl::RxFrame *frame_p);
+
+    /**
+     * @brief Executes when frame is aborted.
+     * 
+     * @param frame_number Number of the aborted frame.
+     */
     void FrameAborted(int frame_number);
+
+    /**
+     * @brief Executes when frame is completed.
+     * 
+     * @param frame_number Number of the completed frame.
+     */
     void FrameCompleted(int frame_number);
+
+    /**
+     * @brief Executes when an error is generated for a frame.
+     * 
+     * @param frame_number Number of the frame.
+     * @param frame_p Frame with the error.
+     * @param error_code The code indicating the error.
+     * @param error_string A string describing the error.
+     */
     void FrameError(int frame_number, const craydl::RxFrame *frame_p, int error_code, const std::string &error_string);
 
 private:
@@ -235,6 +319,9 @@ private:
      */
     int getNumImagesToAcquire();
 
+    /**
+     * @brief Register all virtual status and status flag change callbacks.
+     */
     void registerAllStatusCallbacks();
 
     std::unique_ptr<craydl::RxDetector> m_rayonixDetector; //!< SDK detector object.

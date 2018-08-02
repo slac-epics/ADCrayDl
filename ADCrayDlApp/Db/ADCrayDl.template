@@ -296,9 +296,9 @@ record(stringin, "$(P)$(R)StringPedestalTimestamp_RBV")
 {
     field(DTYP, "asynOctetRead")
     field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))StringPedestalTimestamp")
-    field(SCAN, "I/O Intr")
-    # field(SDIS, "$(P)$(R)IsPedestalTimestampAlarm NPP MS")
-    # field(DISV, "-1")
+    field(SCAN, "Passive")
+    field(SDIS, "$(P)$(R)IsPedestalTimestampAlarm NPP MS")
+    field(DISV, "-1")
 }
 
 record(ai, "$(P)$(R)NowTS_RBV")
@@ -314,6 +314,7 @@ record(calc, "$(P)$(R)IsPedestalTimestampAlarm")
     field(CALC, "B-A")
     field(INPA, "$(P)$(R)PedestalTimestamp_RBV PP")
     field(INPB, "$(P)$(R)NowTS_RBV PP")
+    field(FLNK, "$(P)$(R)StringPedestalTimestamp_RBV PP")
     field(HIHI, "$(MAXAGEPEDESTAL)")
     field(HHSV, "MAJOR")
 }

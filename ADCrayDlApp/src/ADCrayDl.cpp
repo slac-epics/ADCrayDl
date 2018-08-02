@@ -1,3 +1,11 @@
+/**
+ * @brief Definition of the ADCRayDl class.
+ * 
+ * @file ADCrayDl.cpp
+ * @author Domen Soklic (domen.soklic@cosylab.com)
+ * @date 2018-08-02
+ */
+
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -29,10 +37,10 @@
 
 namespace
 {
-    static const char *DRIVER_NAME = "ADCrayDl";
-    static const useconds_t POLLING_INTERVAL_US = 1e6; // 1 second
-    static const boost::posix_time::ptime EPICS_EPOCH(boost::gregorian::date(1990, 1, 1));
-    static const char *TIMESTAMP_FORMAT = "%a %b %d %Y %H:%M:%S";
+    static const char *DRIVER_NAME = "ADCrayDl"; //!< Name of the driver used in logging.
+    static const useconds_t POLLING_INTERVAL_US = 1e6; //!< Polling interval. 1 second.
+    static const boost::posix_time::ptime EPICS_EPOCH(boost::gregorian::date(1990, 1, 1)); //!< Epics epoch is 1. January 1990.
+    static const char *TIMESTAMP_FORMAT = "%a %b %d %Y %H:%M:%S"; //!< Timestamp format used for pedestal.
 }
 
 namespace adcraydl
@@ -84,7 +92,7 @@ bool ADCrayDl::handleCoolingPV(const int function, const epicsFloat64 value, asy
 {
     if (function == CCDTempSetpointFunction)
     {
-        const craydl::RxReturnStatus error = m_rayonixDetector->SetSensorTemperatureSetpoint(value); // FIXME is this the correct method?
+        const craydl::RxReturnStatus error = m_rayonixDetector->SetSensorTemperatureSetpoint(value);
         
         if (error.IsError())
         {
@@ -96,7 +104,7 @@ bool ADCrayDl::handleCoolingPV(const int function, const epicsFloat64 value, asy
     }
     else if (function == CoolerTempSetpointFunction)
     {
-        const craydl::RxReturnStatus error = m_rayonixDetector->SetColdHeadTemperatureSetpoint(value); // FIXME is this the correct method?
+        const craydl::RxReturnStatus error = m_rayonixDetector->SetColdHeadTemperatureSetpoint(value);
 
         if (error.IsError())
         {
@@ -540,7 +548,10 @@ void ADCrayDl::SequenceStarted()
 
 void ADCrayDl::SequenceEnded()
 {
-    // Intentionally empty.
+    setIntegerParam(ADAcquire, 0);
+
+    /* Do callbacks so higher layers see any changes */
+    callParamCallbacks();
 }
 
 void ADCrayDl::ExposureStarted(int frame_number)
@@ -620,16 +631,6 @@ void ADCrayDl::RawFrameReady(int frame_number, const craydl::RxFrame *frame_p)
 void ADCrayDl::FrameReady(int frame_number, const craydl::RxFrame *frame_p)
 {
     applyFrameToAD(frame_p);
-
-    const int numOfFrames = getNumImagesToAcquire();
-
-    if (frame_number == numOfFrames)
-    {
-        setIntegerParam(ADAcquire, 0);
-
-        /* Do callbacks so higher layers see any changes */
-        callParamCallbacks();
-    }
 }
 
 void ADCrayDl::FrameAborted(int frame_number)
@@ -860,6 +861,7 @@ ADCrayDl::ADCrayDl(const char *portName, NDDataType_t dataType,
     status |= setIntegerParam(ReadoutModeFunction, ReadoutModeStandard);
     status |= setIntegerParam(PedestalNumImagesFunction, 1);
     status |= setIntegerParam(PedestalTimestampFunction, 0);
+    status |= setStringParam(StringPedestalTimestampFunction, "");
 
     /* Do callbacks so higher layers see any changes */
     callParamCallbacks();
