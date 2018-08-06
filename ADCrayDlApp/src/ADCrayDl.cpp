@@ -118,43 +118,11 @@ bool ADCrayDl::handleCoolingPV(const int function, const epicsFloat64 value, asy
     return false;
 }
 
-bool ADCrayDl::handleVacuumPV(const int function, const epicsInt32 value, asynStatus &status)
-{
-    // if (function == VacuumValveFunction)
-    // {
-    //     craydl::RxReturnStatus error;
-
-    //     if (value == 0)
-    //     {
-    //         error = m_rayonixDetector->DisableVacuumValve();
-    //     }
-    //     else
-    //     {
-    //         error = m_rayonixDetector->EnableVacuumValve();
-    //     }
-
-    //     if (error.IsError())
-    //     {
-    //         const std::string command = (value == 0) ? "disabling" : "enabling";
-    //         std::cerr << "Error " << command << " vacuum valve: " << error.ErrorText() << std::endl;
-    //         status = asynError;
-    //     }
-
-    //     return true;
-    // }
-
-    return false;
-}
-
 int ADCrayDl::getNumImagesToAcquire()
 {
     int imageMode;
     const int status = getIntegerParam(ADImageMode, &imageMode);
-
-    if (status != 0)
-    {
-        throw std::runtime_error("Error getting ADImageMode parameter.");
-    }
+    assert(status == 0);
 
     switch (imageMode)
     {
@@ -233,7 +201,8 @@ asynStatus ADCrayDl::writeInt32(asynUser *pasynUser, epicsInt32 value)
                 status = asynError;
             }
 
-            setIntegerParam(ADAcquire, 0);
+            const int status = setIntegerParam(ADAcquire, 0);
+            assert(status == 0);
         }
     }
     else if (function == ADNumImages)
@@ -371,7 +340,7 @@ asynStatus ADCrayDl::writeInt32(asynUser *pasynUser, epicsInt32 value)
             m_pollingThread = std::thread(&ADCrayDl::pollDetectorStatus, this, POLLING_INTERVAL_US); 
         }
     }
-    else if (!handleCoolingPV(function, value, status) && !handleVacuumPV(function, value, status)) // Check if these are cooling or vacuum PVs
+    else if (!handleCoolingPV(function, value, status)) // Check if these are cooling PVs
     {
         // If not, use base method.
         status = ADDriver::writeInt32(pasynUser, value);
@@ -548,7 +517,8 @@ void ADCrayDl::SequenceStarted()
 
 void ADCrayDl::SequenceEnded()
 {
-    setIntegerParam(ADAcquire, 0);
+    const int status = setIntegerParam(ADAcquire, 0);
+    assert(status == 0);
 
     /* Do callbacks so higher layers see any changes */
     callParamCallbacks();
@@ -574,11 +544,9 @@ void ADCrayDl::ReadoutEnded(int frame_number)
     // Intentionally empty.
 }
 
-static time_t toEpicsTimestamp(const boost::posix_time::ptime &pt)
+time_t ADCrayDl::toEpicsSecondsSinceEpoch(const boost::posix_time::ptime &posixTime)
 {
-    using namespace boost::posix_time;
-
-    time_duration diff(pt - EPICS_EPOCH);
+    boost::posix_time::time_duration diff(posixTime - EPICS_EPOCH);
     const time_t localTime = (diff.ticks() / diff.ticks_per_second());
 
     std::tm local_field = *std::gmtime(&localTime);
@@ -588,7 +556,7 @@ static time_t toEpicsTimestamp(const boost::posix_time::ptime &pt)
     return utc;
 }
 
-static std::string timestampToString(const time_t timestamp)
+std::string ADCrayDl::secondsSinceEpochToString(const time_t timestamp)
 {
     char timeString[32];
 
@@ -603,22 +571,14 @@ void ADCrayDl::BackgroundFrameReady(const craydl::RxFrame *frame_p)
     // Handle pedestals
     const craydl::FrameMetaData &metadata = frame_p->metaData();
 
-    const time_t timestamp = toEpicsTimestamp(metadata.AcquisitionStartTimestamp());
+    const time_t timestamp = toEpicsSecondsSinceEpoch(metadata.AcquisitionStartTimestamp());
     int status = setIntegerParam(PedestalTimestampFunction, timestamp);
 
-    status |= setStringParam(StringPedestalTimestampFunction, timestampToString(timestamp));
-
-    if (status != 0)
-    {
-        throw std::runtime_error("Error setting pedestal timestamp.");
-    }
+    status |= setStringParam(StringPedestalTimestampFunction, secondsSinceEpochToString(timestamp));
+    assert(status == 0);
 
     status = setIntegerParam(AcquirePedestalFunction, 0);
-
-    if (status != 0)
-    {
-        throw std::runtime_error("Error resetting AcquirePedestal PV.");
-    }
+    assert(status == 0);
 
     callParamCallbacks();
 }
@@ -673,7 +633,9 @@ void ADCrayDl::applyFrameToAD(const craydl::RxFrame *frame_p)
 
     // Call callbacks.
     int arrayCallbacks;
-    getIntegerParam(NDArrayCallbacks, &arrayCallbacks);
+    const int status = getIntegerParam(NDArrayCallbacks, &arrayCallbacks);
+    assert(status == 0);
+
     if (arrayCallbacks != 0)
     {
         doCallbacksGenericPointer(inArray, NDArrayData, 0);
@@ -713,14 +675,16 @@ int ADCrayDl::updateDimensionSize()
 void ADCrayDl::increaseArrayCounter()
 {
     int arrayCounter;
-    getIntegerParam(NDArrayCounter, &arrayCounter);
+    int status = getIntegerParam(NDArrayCounter, &arrayCounter);
     ++arrayCounter;
-    setIntegerParam(NDArrayCounter, arrayCounter);
+    status |= setIntegerParam(NDArrayCounter, arrayCounter);
 
     int imageCounter;
-    getIntegerParam(ADNumImagesCounter, &imageCounter);
+    status |= getIntegerParam(ADNumImagesCounter, &imageCounter);
     ++imageCounter;
-    setIntegerParam(ADNumImagesCounter, imageCounter);
+    status |= setIntegerParam(ADNumImagesCounter, imageCounter);
+
+    assert(status == 0);
 
     /* Do callbacks so higher layers see any changes */
     callParamCallbacks();
@@ -741,18 +705,6 @@ void ADCrayDl::registerAllStatusCallbacks()
     {
         m_rayonixDetector->RegisterStateChangeCallback(*si, this);
     }
-}
-
-static DBADDR getPVAddr(const char *evName)
-{
-    DBADDR addr;
-
-    if (dbNameToAddr(evName, &addr))
-    {
-        printf("No PV named %s!!!\n", evName);
-    }
-
-    return addr;
 }
 
 /** Constructor
@@ -778,7 +730,6 @@ ADCrayDl::ADCrayDl(const char *portName, NDDataType_t dataType,
        m_numPedestals(1)
 {
     int status = asynSuccess;
-    char versionString[20];
     const char *functionName = "ADCrayDl";
 
     // Create custom parameters
@@ -835,7 +786,14 @@ ADCrayDl::ADCrayDl(const char *portName, NDDataType_t dataType,
 
     updateDimensionSize();
 
+    // Create driver version string.
+    std::stringstream driverVersionSS;
+    driverVersionSS << DRIVER_VERSION << ".";
+    driverVersionSS << DRIVER_REVISION << ".";
+    driverVersionSS << DRIVER_MODIFICATION;
+
     // Set defaults
+    status |= setStringParam(NDDriverVersion, driverVersionSS.str());
     status |= setStringParam(ADManufacturer, "Rayonix");
     status |= setStringParam(ADModel, detectorModel.c_str());
     status |= setStringParam(ADFirmwareVersion, detectorFirmwareVersion.c_str());

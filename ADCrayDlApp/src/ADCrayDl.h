@@ -19,12 +19,12 @@
 #include "craydl/RxFrame.h"
 #include "craydl/RxCallbacks.h"
 
-#define DRIVER_VERSION      1
-#define DRIVER_REVISION     0
-#define DRIVER_MODIFICATION 0
-
 namespace adcraydl
 {
+
+static const uint32_t DRIVER_VERSION      = 1;
+static const uint32_t DRIVER_REVISION     = 0;
+static const uint32_t DRIVER_MODIFICATION = 0;
 
 /**
  * @brief This class ensures concurrent access to a boolean variable.
@@ -295,16 +295,6 @@ private:
     bool handleCoolingPV(const int function, const epicsFloat64 value, asynStatus &status);
 
     /**
-     * @brief This method checks if the provided function corresponds to a vacuum PV and tries to handle it.
-     * 
-     * @param function     Function of the write operation.
-     * @param value        Value being written.
-     * @param status [out] Used to return status.
-     * @return             True when function was handled by this method, false when not.
-     */
-    bool handleVacuumPV(const int function, const epicsInt32 value, asynStatus &status);
-
-    /**
      * @brief Increases the array count by one.
      */
     void increaseArrayCounter();
@@ -323,6 +313,22 @@ private:
      * @brief Register all virtual status and status flag change callbacks.
      */
     void registerAllStatusCallbacks();
+
+    /**
+     * @brief Converts a posix time variable to seconds since Epics epoch.
+     * 
+     * @param posixTime Input posix time.
+     * @return time_t Seconds since Epics epoch.
+     */
+    static time_t toEpicsSecondsSinceEpoch(const boost::posix_time::ptime &posixTime);
+
+    /**
+     * @brief This method creates a time string from the provided seconds since Epics epoch timestamp.
+     * 
+     * @param timestamp Seconds since Epics epoch.
+     * @return std::string Formated time string.
+     */
+    static std::string secondsSinceEpochToString(const time_t timestamp);
 
     std::unique_ptr<craydl::RxDetector> m_rayonixDetector; //!< SDK detector object.
     NDDimension_t m_dimsOut[NUM_DIMS]; //!< Array of dimension properties.
