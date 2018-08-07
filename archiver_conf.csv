@@ -1,21 +1,25 @@
-PV Name,scan period,mode
-13SIM1:cam1:PedestalTimestamp_RBV,1,monitor
-13SIM1:cam1:TriggerMode_RBV,1,monitor
-13SIM1:cam1:VacuumValve_RBV,1,monitor
-13SIM1:cam1:LinePressure_RBV,1,monitor
-13SIM1:cam1:ChamberPressure_RBV,1,monitor
-13SIM1:cam1:VacuumValveOpen_RBV,1,monitor
-13SIM1:cam1:VacuumValveEnabled_RBV,1,monitor
-13SIM1:cam1:VacuumPumpRunning_RBV,1,monitor
-13SIM1:cam1:VacuumPumpIgnored_RBV,1,monitor
-13SIM1:cam1:Cooler_RBV,1,monitor
-13SIM1:cam1:CCDTempSetpoint_RBV,1,monitor
-13SIM1:cam1:CoolerTempSetpoint_RBV,1,monitor
-13SIM1:cam1:MeanSensorTemp_RBV,1,monitor
-13SIM1:cam1:MaxSensorTemp_RBV,1,monitor
-13SIM1:cam1:MinSensorTemp_RBV,1,monitor
-13SIM1:cam1:MeanCoolerTemp_RBV,1,monitor
-13SIM1:cam1:MaxCoolerTemp_RBV,1,monitor
-13SIM1:cam1:MinCoolerTemp_RBV,1,monitor
-13SIM1:cam1:CoolerEnabled_RBV,1,monitor
-13SIM1:cam1:CoolerRunning_RBV,1,monitor
+# Archive template
+# Format:
+# <PVNAME> <PERIOD> [ monitor ]
+
+# Archive these values only when they change
+13SIM1:cam1:PedestalTimestamp_RBV 1 monitor
+13SIM1:cam1:TriggerMode_RBV 1 monitor
+13SIM1:cam1:VacuumValve_RBV 1 monitor
+13SIM1:cam1:LinePressure_RBV 1 monitor
+13SIM1:cam1:ChamberPressure_RBV 1 monitor
+13SIM1:cam1:VacuumValveOpen_RBV 1 monitor
+13SIM1:cam1:VacuumValveEnabled_RBV 1 monitor
+13SIM1:cam1:VacuumPumpRunning_RBV 1 monitor
+13SIM1:cam1:VacuumPumpIgnored_RBV 1 monitor
+13SIM1:cam1:Cooler_RBV 1 monitor
+13SIM1:cam1:CCDTempSetpoint_RBV 1 monitor
+13SIM1:cam1:CoolerTempSetpoint_RBV 1 monitor
+13SIM1:cam1:MeanSensorTemp_RBV 1 monitor
+13SIM1:cam1:MaxSensorTemp_RBV 1 monitor
+13SIM1:cam1:MinSensorTemp_RBV 1 monitor
+13SIM1:cam1:MeanCoolerTemp_RBV 1 monitor
+13SIM1:cam1:MaxCoolerTemp_RBV 1 monitor
+13SIM1:cam1:MinCoolerTemp_RBV 1 monitor
+13SIM1:cam1:CoolerEnabled_RBV 1 monitor
+13SIM1:cam1:CoolerRunning_RBV 1 monitor
