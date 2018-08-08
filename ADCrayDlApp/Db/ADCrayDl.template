@@ -321,30 +321,30 @@ record(calc, "$(P)$(R)IsPedestalTimestampAlarm")
 
 # Vacuum records
 
-# record(bo, "$(P)$(R)VacuumValve")
-# {
-#     field(PINI, "NO")
-#     field(DTYP, "asynInt32")
-#     field(OUT,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))VacuumValve")
-#     field(ZNAM, "Off")
-#     field(ONAM, "On")
-#     field(ZSV,  "MAJOR")
-#     field(OSV,  "NO_ALARM")
-#     field(VAL,  "0")
-#     info(autosaveFields, "VAL")
-#     info(asyn:READBACK, "1")
-# }
+record(bo, "$(P)$(R)VacuumValve")
+{
+    field(PINI, "NO")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))VacuumValve")
+    field(ZNAM, "Disabled")
+    field(ONAM, "Enabled")
+    field(ZSV,  "MAJOR")
+    field(OSV,  "NO_ALARM")
+    field(VAL,  "0")
+    info(autosaveFields, "VAL")
+    info(asyn:READBACK, "1")
+}
 
-# record(bi, "$(P)$(R)VacuumValve_RBV")
-# {
-#     field(DTYP, "asynInt32")
-#     field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))VacuumValve")
-#     field(ZNAM, "Off")
-#     field(ONAM, "On")
-#     field(ZSV,  "MAJOR")
-#     field(OSV,  "NO_ALARM")
-#     field(SCAN, "I/O Intr")
-# }
+record(bi, "$(P)$(R)VacuumValve_RBV")
+{
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))VacuumValve")
+    field(ZNAM, "Disabled")
+    field(ONAM, "Enabled")
+    field(ZSV,  "MAJOR")
+    field(OSV,  "NO_ALARM")
+    field(SCAN, "I/O Intr")
+}
 
 record(ai, "$(P)$(R)LinePressure_RBV")
 {

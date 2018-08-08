@@ -34,6 +34,7 @@ static const char *COOLER_RUNNING_STR       = "CoolerRunning";
 /*
  * Vacuum records.
  */
+static const char *VACUUM_VALVE_STR         = "VacuumValve";
 static const char *LINE_PRESSURE_STR        = "LinePressure";
 static const char *CHAMBER_PRESSURE_STR     = "ChamberPressure";
 static const char *VACUUM_VALVE_OPEN_STR    = "VacuumValveOpen";

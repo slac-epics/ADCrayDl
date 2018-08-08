@@ -295,6 +295,16 @@ private:
     bool handleCoolingPV(const int function, const epicsFloat64 value, asynStatus &status);
 
     /**
+     * @brief This method checks if the provided function corresponds to a vacuum PV and tries to handle it.
+     * 
+     * @param function     Function of the write operation.
+     * @param value        Value being written.
+     * @param status [out] Used to return status.
+     * @return             True when function was handled by this method, false when not.
+     */
+    bool handleVacuumPV(const int function, const epicsInt32 value, asynStatus &status);
+
+    /**
      * @brief Increases the array count by one.
      */
     void increaseArrayCounter();
@@ -363,7 +373,7 @@ private:
     int CoolerRunningFunction;
 
     // Vacuum
-    // int VacuumValveFunction;
+    int VacuumValveFunction;
     int LinePressureFunction;
     int ChamberPressureFunction;
     int VacuumValveOpenFunction;

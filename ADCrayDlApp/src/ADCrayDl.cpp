@@ -88,6 +88,34 @@ bool ADCrayDl::handleCoolingPV(const int function, const epicsInt32 value, asynS
     return false;
 }
 
+bool ADCrayDl::handleVacuumPV(const int function, const epicsInt32 value, asynStatus &status)
+{
+    if (function == VacuumValveFunction)
+    {
+        craydl::RxReturnStatus error;
+
+        if (value == 0)
+        {
+            error = m_rayonixDetector->DisableVacuumValve();
+        }
+        else
+        {
+            error = m_rayonixDetector->EnableVacuumValve();
+        }
+
+        if (error.IsError())
+        {
+            const std::string command = (value == 0) ? "disabling" : "enabling";
+            std::cerr << "Error " << command << " vacuum valve: " << error.ErrorText() << std::endl;
+            status = asynError;
+        }
+
+        return true;
+    }
+
+    return false;
+}
+
 bool ADCrayDl::handleCoolingPV(const int function, const epicsFloat64 value, asynStatus &status)
 {
     if (function == CCDTempSetpointFunction)
@@ -340,7 +368,7 @@ asynStatus ADCrayDl::writeInt32(asynUser *pasynUser, epicsInt32 value)
             m_pollingThread = std::thread(&ADCrayDl::pollDetectorStatus, this, POLLING_INTERVAL_US); 
         }
     }
-    else if (!handleCoolingPV(function, value, status)) // Check if these are cooling PVs
+    else if (!handleCoolingPV(function, value, status) && !handleVacuumPV(function, value, status)) // Check if these are cooling of vacuum PVs
     {
         // If not, use base method.
         status = ADDriver::writeInt32(pasynUser, value);
@@ -756,7 +784,7 @@ ADCrayDl::ADCrayDl(const char *portName, NDDataType_t dataType,
     createParam(COOLER_RUNNING_STR,       asynParamInt32,   &CoolerRunningFunction);
 
     // Vacuum
-    // createParam(VACUUM_VALVE_STR,         asynParamInt32,   &VacuumValveFunction);
+    createParam(VACUUM_VALVE_STR,         asynParamInt32,   &VacuumValveFunction);
     createParam(LINE_PRESSURE_STR,        asynParamFloat64, &LinePressureFunction);
     createParam(CHAMBER_PRESSURE_STR,     asynParamFloat64, &ChamberPressureFunction);
     createParam(VACUUM_VALVE_OPEN_STR,    asynParamInt32,   &VacuumValveOpenFunction);
