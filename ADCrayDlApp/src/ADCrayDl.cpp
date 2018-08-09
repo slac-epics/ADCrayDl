@@ -368,6 +368,78 @@ asynStatus ADCrayDl::writeInt32(asynUser *pasynUser, epicsInt32 value)
             m_pollingThread = std::thread(&ADCrayDl::pollDetectorStatus, this, POLLING_INTERVAL_US); 
         }
     }
+    else if (function == TriggerSignalTypeFunction)
+    {
+        craydl::DigitalIOSignalType_t digitalIOSignalType;
+
+        switch (value)
+        {
+            case DigitalIOSignalTypeNone:
+            default:
+                digitalIOSignalType = craydl::DigitalIOSignalTypeNone;
+                break;
+
+            case DigitalIOSignalTypeOpto:
+                digitalIOSignalType = craydl::DigitalIOSignalTypeOpto;
+                break;
+
+            case DigitalIOSignalTypeOptoInverted:
+                digitalIOSignalType = craydl::DigitalIOSignalTypeOptoInverted;
+                break;
+
+            case DigitalIOSignalTypeCMOS:
+                digitalIOSignalType = craydl::DigitalIOSignalTypeCMOS;
+                break;
+
+            case DigitalIOSignalTypeCMOSPullDown:
+                digitalIOSignalType = craydl::DigitalIOSignalTypeCMOSPullDown;
+                break;
+
+            case DigitalIOSignalTypeCMOSPullUp:
+                digitalIOSignalType = craydl::DigitalIOSignalTypeCMOSPullUp;
+                break;
+
+            case DigitalIOSignalTypeCMOSPullDownInverted:
+                digitalIOSignalType = craydl::DigitalIOSignalTypeCMOSPullDownInverted;
+                break;
+
+            case DigitalIOSignalTypeCMOSPullUpInverted:
+                digitalIOSignalType = craydl::DigitalIOSignalTypeCMOSPullUpInverted;
+                break;
+
+            case DigitalIOSignalTypeSoftware:
+                digitalIOSignalType = craydl::DigitalIOSignalTypeSoftware;
+                break;
+        }
+
+        const craydl::RxReturnStatus error = m_rayonixDetector->SetFrameTriggerSignalType(craydl::DigitalIOSignalType(digitalIOSignalType));
+        if (error.IsError())
+        {
+            std::cerr << "Error setting trigger signal type " << value << ", error: " << error.ErrorText() << std::endl;
+            status = asynError;
+        }
+    }
+    else if (SoftwareBulbFunction)
+    {
+        if (value)
+        {
+            const craydl::RxReturnStatus error = m_rayonixDetector->SqueezeBulb();
+            if (error.IsError())
+            {
+                std::cerr << "Error calling SqueezeBulb " << value << ", error: " << error.ErrorText() << std::endl;
+                status = asynError;
+            }
+        }
+        else
+        {
+            const craydl::RxReturnStatus error = m_rayonixDetector->ReleaseBulb();
+            if (error.IsError())
+            {
+                std::cerr << "Error calling ReleaseBulb " << value << ", error: " << error.ErrorText() << std::endl;
+                status = asynError;
+            }
+        }
+    }
     else if (!handleCoolingPV(function, value, status) && !handleVacuumPV(function, value, status)) // Check if these are cooling of vacuum PVs
     {
         // If not, use base method.
@@ -769,6 +841,8 @@ ADCrayDl::ADCrayDl(const char *portName, NDDataType_t dataType,
     createParam(ENABLE_DETECTOR_QUERYING_STR,  asynParamInt32, &EnableDetectorQueryingFunction);
     createParam(BINNING_STR,                   asynParamInt32, &BinningFunction);
     createParam(SHUTTER_STATUS_STR,            asynParamInt32, &ShutterStatusFunction);
+    createParam(TRIGGER_SIGNAL_TYPE_STR,       asynParamInt32, &TriggerSignalTypeFunction);
+    createParam(SOFTWARE_BULB_STR,             asynParamInt32, &SoftwareBulbFunction);
 
     // Cooling
     createParam(COOLER_STR,               asynParamInt32,   &CoolerFunction);
@@ -847,6 +921,7 @@ ADCrayDl::ADCrayDl(const char *portName, NDDataType_t dataType,
     status |= setIntegerParam(ReadoutModeFunction, ReadoutModeStandard);
     status |= setIntegerParam(PedestalNumImagesFunction, 1);
     status |= setIntegerParam(PedestalTimestampFunction, 0);
+    status |= setIntegerParam(TriggerSignalTypeFunction, DigitalIOSignalTypeOpto);
     status |= setStringParam(StringPedestalTimestampFunction, "");
 
     /* Do callbacks so higher layers see any changes */
@@ -858,7 +933,7 @@ ADCrayDl::ADCrayDl(const char *portName, NDDataType_t dataType,
     craydl::RxReturnStatus error = m_rayonixDetector->Open();
     if (error.IsError())
     {
-        printf("%s: Unable to open detector");
+        printf("%s: Unable to open detector", error.ErrorText().c_str());
         return;
     }
 

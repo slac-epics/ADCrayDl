@@ -237,6 +237,19 @@ private:
         TriggerModeLCLSMode = 3
     };
 
+    enum DigitalIOSignalType
+    {
+        DigitalIOSignalTypeNone                 = 0,
+        DigitalIOSignalTypeOpto                 = 1,
+        DigitalIOSignalTypeOptoInverted         = 2,
+	DigitalIOSignalTypeCMOS                 = 3,
+        DigitalIOSignalTypeCMOSPullDown         = 4,
+        DigitalIOSignalTypeCMOSPullUp           = 5,
+        DigitalIOSignalTypeCMOSPullDownInverted = 6,
+        DigitalIOSignalTypeCMOSPullUpInverted   = 7,
+        DigitalIOSignalTypeSoftware             = 8
+    };
+
     enum ReadoutMode
     {
         ReadoutModeStandard = 0,
@@ -358,6 +371,8 @@ private:
     int EnableDetectorQueryingFunction;
     int BinningFunction;
     int ShutterStatusFunction;
+    int TriggerSignalTypeFunction;
+    int SoftwareBulbFunction;
 
     // Cooling
     int CoolerFunction;

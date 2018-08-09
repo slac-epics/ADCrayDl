@@ -1,5 +1,6 @@
 $(P)$(R)ColorMode
 $(P)$(R)TriggerMode
+$(P)$(R)TriggerSignalType
 $(P)$(R)Bin
 $(P)$(R)PedestalNumImages
 $(P)$(R)ReadoutMode

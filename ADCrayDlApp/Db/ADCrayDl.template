@@ -115,6 +115,58 @@ record(mbbi, "$(P)$(R)TriggerMode_RBV")
     field(SCAN, "I/O Intr")
 }
 
+record(mbbo, "$(P)$(R)TriggerSignalType")
+{
+    field(PINI, "YES")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))TriggerSignalType")
+    field(ZRST, "None")
+    field(ZRVL, "0")
+    field(ONST, "Opto")
+    field(ONVL, "1")
+    field(TWST, "OptoInverted")
+    field(TWVL, "2")
+    field(THST, "CMOS")
+    field(THVL, "3")
+    field(FRST, "CMOSPullDown")
+    field(FRVL, "4")
+    field(FVST, "CMOSPullUp")
+    field(FVVL, "5")
+    field(SXST, "CMOSPullDownInverted")
+    field(SXVL, "6")
+    field(SVST, "CMOSPullUpInverted")
+    field(SVVL, "7")
+    field(EIST, "Software")
+    field(EIVL, "8")
+    field(VAL,  "1")
+    info(autosaveFields, "VAL")
+}
+
+record(mbbi, "$(P)$(R)TriggerSignalType_RBV")
+{
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))TriggerSignalType")
+    field(ZRST, "None")
+    field(ZRVL, "0")
+    field(ONST, "Opto")
+    field(ONVL, "1")
+    field(TWST, "OptoInverted")
+    field(TWVL, "2")
+    field(THST, "CMOS")
+    field(THVL, "3")
+    field(FRST, "CMOSPullDown")
+    field(FRVL, "4")
+    field(FVST, "CMOSPullUp")
+    field(FVVL, "5")
+    field(SXST, "CMOSPullDownInverted")
+    field(SXVL, "6")
+    field(SVST, "CMOSPullUpInverted")
+    field(SVVL, "7")
+    field(EIST, "Software")
+    field(EIVL, "8")
+    field(SCAN, "I/O Intr")
+}
+
 record(bo, "$(P)$(R)EnableDetectorQuerying") {
     field(DTYP, "asynInt32")
     field(PINI, "YES")
@@ -130,6 +182,24 @@ record(bi, "$(P)$(R)EnableDetectorQuerying_RBV") {
     field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))EnableDetectorQuerying")
     field(ZNAM, "Disabled")
     field(ONAM, "Enabled")
+    field(SCAN, "I/O Intr")
+}
+
+record(bo, "$(P)$(R)SoftwareBulb") {
+    field(DTYP, "asynInt32")
+    field(PINI, "YES")
+    field(OUT,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))SoftwareBulb")
+    field(ZNAM, "Off")
+    field(ONAM, "On")
+    field(VAL,  "0")
+    info(asyn:READBACK, "1")
+}
+
+record(bi, "$(P)$(R)SoftwareBulb_RBV") {
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR=0),$(TIMEOUT=1))SoftwareBulb")
+    field(ZNAM, "Off")
+    field(ONAM, "On")
     field(SCAN, "I/O Intr")
 }
 

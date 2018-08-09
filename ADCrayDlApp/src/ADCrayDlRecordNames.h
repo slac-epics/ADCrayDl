@@ -15,6 +15,8 @@ static const char *STRING_PEDESTAL_TIMESTAMP_STR = "StringPedestalTimestamp";
 static const char *SHUTTER_STATUS_STR            = "ShutterStatus";
 static const char *ENABLE_DETECTOR_QUERYING_STR  = "EnableDetectorQuerying";
 static const char *BINNING_STR                   = "Binning";
+static const char *TRIGGER_SIGNAL_TYPE_STR       = "TriggerSignalType";
+static const char *SOFTWARE_BULB_STR             = "SoftwareBulb";
 
 /*
  * Cooling records.
