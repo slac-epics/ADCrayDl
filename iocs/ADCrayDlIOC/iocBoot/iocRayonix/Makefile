@@ -11,6 +11,6 @@ include $(TOP)/configure/CONFIG
 #ARCH = linux-x86_64
 #ARCH = solaris-sparc
 #ARCH = vxWorks-ppc32
-ARCH = rhel6-x86_64
+ARCH = $(EPICS_HOST_ARCH)
 TARGETS = envPaths cdCommands dllPath.bat
 include $(TOP)/configure/RULES.ioc

@@ -36,18 +36,20 @@ PROD_SYS_LIBS += craydl
 PROD_DEPLIB_DIRS += $(RAYONIX_LIB)
 
 # FIXME change paths to use variables
-PROD_DEPLIB_DIRS += $(AUTOSAVE)/lib/rhel6-x86_64
+PROD_DEPLIB_DIRS += $(AUTOSAVE)/lib/$(EPICS_HOST_ARCH)
 
-PROD_DEPLIB_DIRS += $(TIMESTAMPFIFO)/lib/rhel6-x86_64
+PROD_DEPLIB_DIRS += $(TIMESTAMPFIFO)/lib/$(EPICS_HOST_ARCH)
 PROD_SYS_LIBS += timeStampFifo
 
-PROD_DEPLIB_DIRS += $(EVENT2)/lib/rhel6-x86_64
+PROD_DEPLIB_DIRS += $(EVENT2)/lib/$(EPICS_HOST_ARCH)
 PROD_SYS_LIBS += devMrfEr
 PROD_SYS_LIBS += drvMrf
 PROD_SYS_LIBS += evrSupport
 PROD_SYS_LIBS += mrfApi
+PROD_SYS_LIBS += boost_thread-mt
+PROD_SYS_LIBS += boost_filesystem-mt
 
-PROD_DEPLIB_DIRS += $(DIAG_TIMER)/lib/rhel6-x86_64
+PROD_DEPLIB_DIRS += $(DIAG_TIMER)/lib/$(EPICS_HOST_ARCH)
 PROD_SYS_LIBS += diagTimer
 
 
