@@ -13,7 +13,8 @@
 #include <epicsMutex.h>
 #include <mutex>
 #include <thread>
-
+#include <string>
+#include <memory>
 #include "ADDriver.h"
 #include "craydl/RxDetector.h"
 #include "craydl/RxFrame.h"
@@ -22,9 +23,13 @@
 namespace adcraydl
 {
 
-static const uint32_t DRIVER_VERSION      = 1;
-static const uint32_t DRIVER_REVISION     = 0;
-static const uint32_t DRIVER_MODIFICATION = 0;
+// REVIEW: C++ code should use std::uint32_t, std::size_t, std::time_t etc. not global
+// names from the C headers. In any case the right headers should be included (cstdint,
+// cstddef, ctime).
+
+static const std::uint32_t DRIVER_VERSION      = 1;
+static const std::uint32_t DRIVER_REVISION     = 0;
+static const std::uint32_t DRIVER_MODIFICATION = 0;
 
 /**
  * @brief This class ensures concurrent access to a boolean variable.
@@ -67,6 +72,7 @@ public:
         m_value = value;
     }
 
+    // REVIEW: make get() const, and to make that work make m_mutex mutable.
     /**
      * @brief Concurrent getter.
      * 
@@ -83,6 +89,8 @@ private:
     epicsMutex m_mutex; //!< Mutex used by the thread.
 };
 
+// REVIEW: Inherit VirtualFrameCallback and VirtualKeyedStateChangeCallback privately
+//         and overridden functions should be privated.
 /**
  * @brief areaDetector module for the Rayonix CrayDl SDK and its supported detectors.
  */
@@ -102,6 +110,11 @@ public:
      * @brief Destroy the ADCrayDl object.
      */
     virtual ~ADCrayDl();
+
+    // REVIEW: I think the virtual keyword should not be used for functions which
+    //         override a virtual function in a base class, especially if it is not
+    //         meant to be further overridden from a derived class (which is the
+    //         case here).
 
     /**
      * @brief Called when asyn writes integer data.
@@ -126,6 +139,10 @@ public:
      * @return asynStatus Success or failure status of the operation.
      */
     virtual asynStatus writeFloat64(asynUser *pasynUser, epicsFloat64 value);
+
+    // REVIEW: I suggest to somehow group the callbacks (comments?) to make it
+    //         clear these are callbacks, possibly into separate sections for
+    //         VirtualFrameCallback and VirtualKeyedStateChangeCallback.
 
     /**
      * @brief Called when a virtual status changes (e.g. detector temperature).
@@ -229,6 +246,8 @@ public:
 private:
     static const size_t NUM_DIMS = 2; //!< Number of dimensions in image.
 
+    // REVIEW: I suggest to use scoped enums (enum class), GCC 4.4 supports that.
+    //         If you do that, remove the prefix from the enum values.
     enum TriggerMode
     {
         TriggerModeFreeRun  = 0,
@@ -242,7 +261,7 @@ private:
         DigitalIOSignalTypeNone                 = 0,
         DigitalIOSignalTypeOpto                 = 1,
         DigitalIOSignalTypeOptoInverted         = 2,
-	DigitalIOSignalTypeCMOS                 = 3,
+        DigitalIOSignalTypeCMOS                 = 3,
         DigitalIOSignalTypeCMOSPullDown         = 4,
         DigitalIOSignalTypeCMOSPullUp           = 5,
         DigitalIOSignalTypeCMOSPullDownInverted = 6,
@@ -269,9 +288,9 @@ private:
     /**
      * @brief Task that polls detector for current status.
      * 
-     * @param interval_us Interval how often the detector should be polled (in us).
+     * @param interval_s Interval how often the detector should be polled (in seconds).
      */
-    void pollDetectorStatus(const uint32_t interval_us);
+    void pollDetectorStatus(const double interval_s);
 
     /**
      * @brief Takes the frame and copies it to an NDArray. It then submits the data to subscribed plugins.
@@ -280,12 +299,18 @@ private:
      */
     void applyFrameToAD(const craydl::RxFrame *frame_p);
 
+    // REVIEW: Return value should be asynStatus not int.
     /**
      * @brief Updates dimension structures based on current binning mode.
      * 
      * @return int Success status.
      */
     int updateDimensionSize();
+
+    // REVIEW: I don't like the two handleCoolingPV overloads differing only in the type
+    //         of the value argument. In this case it's fine but there would be potential
+    //         for problems if one was int32 and the other other int64, due to default
+    //         promotions. I suggest to use different function names.
 
     /**
      * @brief This method checks if the provided function corresponds to a cooling PV and tries to handle it.

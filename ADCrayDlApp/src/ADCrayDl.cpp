@@ -38,7 +38,7 @@
 namespace
 {
     static const char *DRIVER_NAME = "ADCrayDl"; //!< Name of the driver used in logging.
-    static const useconds_t POLLING_INTERVAL_US = 1e6; //!< Polling interval. 1 second.
+    static const double POLLING_INTERVAL_S = 1.0; //!< Polling interval.
     static const boost::posix_time::ptime EPICS_EPOCH(boost::gregorian::date(1990, 1, 1)); //!< Epics epoch is 1. January 1990.
     static const char *TIMESTAMP_FORMAT = "%a %b %d %Y %H:%M:%S"; //!< Timestamp format used for pedestal.
 }
@@ -46,17 +46,24 @@ namespace
 namespace adcraydl
 {
 
-void ADCrayDl::pollDetectorStatus(const uint32_t interval_us)
+// REVIEW: There's a lot of std::cerr usage for printing errors. With this it is
+//         unclear where errors are coming from (which module, which device).
+//         Have you considered the logging mechanisms provided by asynPortDriver?
+
+void ADCrayDl::pollDetectorStatus(const double interval_s)
 {
     while (m_running.get())
     {
+        // REVIEW: Explain what is happening here. Where does the queried status
+        //         go? Does this synchonously call some of the callbacks?
+
         const craydl::RxReturnStatus status = m_rayonixDetector->QueryStatus();
         if (status.IsError())
         {
             std::cerr << "Error querying status: " << status.ErrorText() << std::endl;
         }
 
-        usleep(interval_us);
+        epicsThreadSleep(interval_s);
     }
 }
 
@@ -161,8 +168,10 @@ int ADCrayDl::getNumImagesToAcquire()
             return 0; // This means that the detector should just keep going.
 
         case ADImageMultiple:
-        default:
             return m_numImages;
+
+        default:
+            throw std::runtime_error("Unknown image mode value not in enum");
     }
 }
 
@@ -175,11 +184,18 @@ asynStatus ADCrayDl::writeInt32(asynUser *pasynUser, epicsInt32 value)
 {
     const int function = pasynUser->reason;
 
+    // REVIEW: I think it is not appropriate to unconditionally print this to cout,
+    //         the logging should be somehow configurable. The people who maintain
+    //         IOCs will not like the console being spammed. Actually, IIRC asyn
+    //         has some built-in logging of parameter reads and writes, but I don't
+    //         know the details. Maybe look at how popular / good quality drivers
+    //         do it.
     std::cout << "writeInt32 func: " << function << ", value: " << value << std::endl;
 
-    // Set the parameter and readback in the parameter library. This may be overwritten when we read back the
-    // status at the end, but that's OK.
-    asynStatus status = setIntegerParam(function, value);
+    // Set the parameter
+    asynStatus status = ADDriver::writeInt32(pasynUser, value);
+
+    // REVIEW: Are the various configuration changes safe while acquisition is active?
 
     /* This is where the parameter is sent to the SDK */
     if (function == ADAcquire)
@@ -190,6 +206,10 @@ asynStatus ADCrayDl::writeInt32(asynUser *pasynUser, epicsInt32 value)
 
         if (value)
         {
+            // REVIEW: Is it safe to do all these things if acquisition is already started?
+            //         Maybe you could try to stop acquisition if already active, or just
+            //         reject the command.
+
             do // This do-while is a convenient solution to error handling. We can jump out of the block early.
             {
                 craydl::RxReturnStatus error = m_rayonixDetector->SetupAcquisitionSequence(getNumImagesToAcquire());
@@ -218,9 +238,16 @@ asynStatus ADCrayDl::writeInt32(asynUser *pasynUser, epicsInt32 value)
                     continue; // Skip other code.
                 }
             } while (false);
+
+            // REVIEW: Seems like you allow any non-zero value to start acquisition and
+            //         will actually set ADAcquire to whatever value was written, but
+            //         I don't see any different meaning. Why not call
+            //         setIntegerParam(ADAcquire, 1) here to make sure the stored value
+            //         is always 0 or 1?
         }
         else
         {
+            // REVIEW: Explain "true" argument (e.g. add inline comment like /*argumentName=*/true).
             // Stop acquisition
             craydl::RxReturnStatus error = m_rayonixDetector->EndAcquisition(true);
             if (error.IsError())
@@ -229,6 +256,7 @@ asynStatus ADCrayDl::writeInt32(asynUser *pasynUser, epicsInt32 value)
                 status = asynError;
             }
 
+            // REVIEW: Variable shadows another variable from parent scope, rename it.
             const int status = setIntegerParam(ADAcquire, 0);
             assert(status == 0);
         }
@@ -245,6 +273,7 @@ asynStatus ADCrayDl::writeInt32(asynUser *pasynUser, epicsInt32 value)
         switch (value)
         {
             case BinningMode1x1:
+            // REVIEW: Error on unknown value?
             default:
                 binningValue = 1;
                 break;
@@ -290,6 +319,7 @@ asynStatus ADCrayDl::writeInt32(asynUser *pasynUser, epicsInt32 value)
         {
             case TriggerModeFreeRun:
             case TriggerModeLCLSMode: // TODO: LCLS mode is not yet implemented in the craydl SDK.
+            // REVIEW: Error on unknown value or unsupported LCLSMode?
             default:
                 triggerMode = craydl::FrameTriggerTypeNone;
                 break;
@@ -317,6 +347,7 @@ asynStatus ADCrayDl::writeInt32(asynUser *pasynUser, epicsInt32 value)
         switch (value)
         {
             case ReadoutModeStandard:
+            // REVIEW: Error on unknown value?
             default:
                 readoutMode = craydl::ReadoutModeStandard;
                 break;
@@ -341,6 +372,7 @@ asynStatus ADCrayDl::writeInt32(asynUser *pasynUser, epicsInt32 value)
     {
         std::cout << "Going to acquire pedestal" << std::endl;
 
+        // REVIEW: Explain "false" argument (e.g. add inline comment like /*argumentName=*/false).
         // Trigger pedestal acquisition
         const craydl::RxReturnStatus error = m_rayonixDetector->AcquireNewBackground(false, m_numPedestals);
         if (error.IsError())
@@ -365,7 +397,7 @@ asynStatus ADCrayDl::writeInt32(asynUser *pasynUser, epicsInt32 value)
             }
 
             m_running = true;
-            m_pollingThread = std::thread(&ADCrayDl::pollDetectorStatus, this, POLLING_INTERVAL_US); 
+            m_pollingThread = std::thread(&ADCrayDl::pollDetectorStatus, this, POLLING_INTERVAL_S);
         }
     }
     else if (function == TriggerSignalTypeFunction)
@@ -440,10 +472,13 @@ asynStatus ADCrayDl::writeInt32(asynUser *pasynUser, epicsInt32 value)
             }
         }
     }
-    else if (!handleCoolingPV(function, value, status) && !handleVacuumPV(function, value, status)) // Check if these are cooling of vacuum PVs
+    else // Check if these are cooling of vacuum PVs
     {
-        // If not, use base method.
-        status = ADDriver::writeInt32(pasynUser, value);
+        const bool isCooling = handleCoolingPV(function, value, status);
+        if (!isCooling)
+        {
+            handleVacuumPV(function, value, status);
+        }
     }
 
     /* Do callbacks so higher layers see any changes */
@@ -476,9 +511,11 @@ asynStatus ADCrayDl::writeFloat64(asynUser *pasynUser, epicsFloat64 value)
 
     std::cout << "writeFloat64 func: " << function << ", value: " << value << std::endl;
 
+    // REVIEW: Are the various configuration changes safe while acquisition is active?
+
     // Set the parameter and readback in the parameter library. This may be overwritten when we read back the
     // status at the end, but that's OK.
-    asynStatus status = setDoubleParam(function, value);
+    asynStatus status = ADDriver::writeFloat64(pasynUser, value);
 
     /* Set the parameter and readback in the parameter library.  This may be overwritten when we read back the
      * status at the end, but that's OK */
@@ -501,9 +538,9 @@ asynStatus ADCrayDl::writeFloat64(asynUser *pasynUser, epicsFloat64 value)
             status = asynError;
         }
     }
-    else if (!handleCoolingPV(function, value, status)) // Check if these are cooling PVs
+    else // Check if these are cooling PVs
     {
-        status = ADDriver::writeFloat64(pasynUser, value);
+        handleCoolingPV(function, value, status);
     }
 
     /* Do callbacks so higher layers see any changes */
@@ -524,6 +561,22 @@ asynStatus ADCrayDl::writeFloat64(asynUser *pasynUser, epicsFloat64 value)
 
     return status;
 }
+
+// REVIEW: You must hold the asynPortDriver lock when calling functions things like set*Param,
+//         get*Param, callParamCallbacks and updateTimeStamp (for the latter I'm not sure).
+//         Also it it is unclear to me if any of these callbacks could be called from
+//         requests to the driver (in which case the port already be locked in the callback).
+//         You need to precisely understand these calls and ensure that the driver is locked
+//         when calling the mentioned asynPortDriver functions, and I think trying to lock a
+//         port if already locked would also be an issue.
+// NOTE: Once the callbacks are fixed to lock the port, we introduce possibility for
+//       deadlock in m_pollingThread.join() above, under the assumption that
+//       QueryStatus() may call the callbacks. If you know that not to be true then,
+//       there is no issue, otherwise it needs to be addressed. I see two fixes:
+//       - Easy fix: Unlock and re-lock the driver around the join.
+//       - Harder fix (and easier to mess up): Only ever start one thread and
+//         synchronize with it to start and stop polling as needed, with the help of
+//         condition_variable or epicsEvent.
 
 void ADCrayDl::VirtualStatusChanged(const craydl::VStatusParameter *vstatus)
 {
@@ -564,7 +617,7 @@ void ADCrayDl::VirtualStatusChanged(const craydl::VStatusParameter *vstatus)
 
         default:
             // Do nothing.
-            break;
+            return;
     }
 
     callParamCallbacks();
@@ -604,7 +657,7 @@ void ADCrayDl::StatusFlagChanged(const craydl::VStatusFlag *vstatus)
 
         default:
             // Do nothing.
-            break;
+            return;
     }
 
     callParamCallbacks();
@@ -660,12 +713,15 @@ std::string ADCrayDl::secondsSinceEpochToString(const time_t timestamp)
 {
     char timeString[32];
 
+    // REVIEW: I would use a function-style cast here.
     const epicsTimeStamp stamp = { static_cast<epicsUInt32>(timestamp), 0 };
     epicsTimeToStrftime(timeString, sizeof(timeString), TIMESTAMP_FORMAT, &stamp);
 
     return std::string(timeString);
 }
 
+// REVIEW: Is BackgroundFrameReady called from within AcquireNewBackground? It matters
+//         because it determines whether you need to lock the driver here.
 void ADCrayDl::BackgroundFrameReady(const craydl::RxFrame *frame_p)
 {
     // Handle pedestals
@@ -673,8 +729,9 @@ void ADCrayDl::BackgroundFrameReady(const craydl::RxFrame *frame_p)
 
     const time_t timestamp = toEpicsSecondsSinceEpoch(metadata.AcquisitionStartTimestamp());
     int status = setIntegerParam(PedestalTimestampFunction, timestamp);
+    assert(status == 0);
 
-    status |= setStringParam(StringPedestalTimestampFunction, secondsSinceEpochToString(timestamp));
+    status = setStringParam(StringPedestalTimestampFunction, secondsSinceEpochToString(timestamp));
     assert(status == 0);
 
     status = setIntegerParam(AcquirePedestalFunction, 0);
@@ -708,6 +765,7 @@ void ADCrayDl::FrameError(int frame_number, const craydl::RxFrame *frame_p, int 
     std::cerr << "Error with frame: " << error_string << std::endl;
 }
 
+// REVIEW: Why not put this code directly into FrameReady?
 void ADCrayDl::applyFrameToAD(const craydl::RxFrame *frame_p)
 {
     // Get timestamp of frame
@@ -716,11 +774,16 @@ void ADCrayDl::applyFrameToAD(const craydl::RxFrame *frame_p)
 
     NDArray *inArray = pNDArrayPool->alloc(NUM_DIMS, m_dims, NDUInt16, frame_p->getSize(), NULL);
 
+    // REVIEW: The m_dimsOut and initDimension seems to do nothing. The documentation
+    //         for initDimension says: "Initializes the dimension structure to size=size,
+    //         binning=1, reverse=0, offset=0.". So you're initializing these NDDimension_t
+    //         structures here and also in updateDimensionSize, and you use them nowhere?
     for (size_t i = 0; i < NUM_DIMS; i++)
     {
         inArray->initDimension(&m_dimsOut[i], m_dims[i]);
     }
 
+    // REVIEW: Use std::memcpy and include <cstring>.
     // The dimensions are the same and the data type is the same, just copy the input image to the output image.
     memcpy(inArray->pData, frame_p->getBufferAddress(), frame_p->getSize());
 
@@ -743,8 +806,19 @@ void ADCrayDl::applyFrameToAD(const craydl::RxFrame *frame_p)
 
     // The module is done with the frame.
     inArray->release();
+
+    // REVIEW: Note that some drivers save the last frame into pArrays[0],
+    //         that allows EPICS to specifically read the latest frame even while
+    //         array callbacks are disabled (using record with SCAN set to
+    //         something other than I/O Intr). Consider if you want to do that.
 }
 
+// REVIEW: updateDimensionSize returns an error code which is never checked.
+//         I suggest to remove the return value and just call setIntegerParam
+//         ignoring its the return value. I think that if setIntegerParam does
+//         fail (which it should not if things are configured right), async
+//         will itself log an error - which is fine if you yourself have no
+//         intention to react to an error.
 int ADCrayDl::updateDimensionSize()
 {
     int pixelsX = 0;
@@ -774,6 +848,9 @@ int ADCrayDl::updateDimensionSize()
 
 void ADCrayDl::increaseArrayCounter()
 {
+    // REVIEW: Signed integer overflow is undefined behavior - check for max value
+    //         and wrap manually.
+
     int arrayCounter;
     int status = getIntegerParam(NDArrayCounter, &arrayCounter);
     ++arrayCounter;
@@ -819,7 +896,8 @@ void ADCrayDl::registerAllStatusCallbacks()
   */
 ADCrayDl::ADCrayDl(const char *portName, NDDataType_t dataType,
                          int maxBuffers, size_t maxMemory, int priority, int stackSize)
-
+    // REVIEW: Add comments to make it clear what is being passed, like /*maxAddr=*/1
+    //         where this is not already clear.
     : ADDriver(portName, 1, 0, maxBuffers, maxMemory,
                0, 0, /* No interfaces beyond those set in ADDriver.cpp */
                0, 1, /* ASYN_CANBLOCK=0, ASYN_MULTIDEVICE=0, autoConnect=1 */
@@ -833,38 +911,38 @@ ADCrayDl::ADCrayDl(const char *portName, NDDataType_t dataType,
     const char *functionName = "ADCrayDl";
 
     // Create custom parameters
-    createParam(ACQUIRE_PEDESTAL_STR,          asynParamInt32, &AcquirePedestalFunction);
-    createParam(READOUT_MODE_STR,              asynParamInt32, &ReadoutModeFunction);
-    createParam(PEDESTAL_NUM_IMG_STR,          asynParamInt32, &PedestalNumImagesFunction);
-    createParam(PEDESTAL_TIMESTAMP_STR,        asynParamInt32, &PedestalTimestampFunction);
-    createParam(STRING_PEDESTAL_TIMESTAMP_STR, asynParamOctet, &StringPedestalTimestampFunction);
-    createParam(ENABLE_DETECTOR_QUERYING_STR,  asynParamInt32, &EnableDetectorQueryingFunction);
-    createParam(BINNING_STR,                   asynParamInt32, &BinningFunction);
-    createParam(SHUTTER_STATUS_STR,            asynParamInt32, &ShutterStatusFunction);
-    createParam(TRIGGER_SIGNAL_TYPE_STR,       asynParamInt32, &TriggerSignalTypeFunction);
-    createParam(SOFTWARE_BULB_STR,             asynParamInt32, &SoftwareBulbFunction);
+    status |= createParam(ACQUIRE_PEDESTAL_STR,          asynParamInt32, &AcquirePedestalFunction);
+    status |= createParam(READOUT_MODE_STR,              asynParamInt32, &ReadoutModeFunction);
+    status |= createParam(PEDESTAL_NUM_IMG_STR,          asynParamInt32, &PedestalNumImagesFunction);
+    status |= createParam(PEDESTAL_TIMESTAMP_STR,        asynParamInt32, &PedestalTimestampFunction);
+    status |= createParam(STRING_PEDESTAL_TIMESTAMP_STR, asynParamOctet, &StringPedestalTimestampFunction);
+    status |= createParam(ENABLE_DETECTOR_QUERYING_STR,  asynParamInt32, &EnableDetectorQueryingFunction);
+    status |= createParam(BINNING_STR,                   asynParamInt32, &BinningFunction);
+    status |= createParam(SHUTTER_STATUS_STR,            asynParamInt32, &ShutterStatusFunction);
+    status |= createParam(TRIGGER_SIGNAL_TYPE_STR,       asynParamInt32, &TriggerSignalTypeFunction);
+    status |= createParam(SOFTWARE_BULB_STR,             asynParamInt32, &SoftwareBulbFunction);
 
     // Cooling
-    createParam(COOLER_STR,               asynParamInt32,   &CoolerFunction);
-    createParam(CCD_TEMP_SETPOINT_STR,    asynParamFloat64, &CCDTempSetpointFunction);
-    createParam(COOLER_TEMP_SETPOINT_STR, asynParamFloat64, &CoolerTempSetpointFunction);
-    createParam(MEAN_SENSOR_TEMP_STR,     asynParamFloat64, &MeanSensorTempFunction);
-    createParam(MAX_SENSOR_TEMP_STR,      asynParamFloat64, &MaxSensorTempFunction);
-    createParam(MIN_SENSOR_TEMP_STR,      asynParamFloat64, &MinSensorTempFunction);
-    createParam(MEAN_COOLER_TEMP_STR,     asynParamFloat64, &MeanCoolerTempFunction);
-    createParam(MAX_COOLER_TEMP_STR,      asynParamFloat64, &MaxCoolerTempFunction);
-    createParam(MIN_COOLER_TEMP_STR,      asynParamFloat64, &MinCoolerTempFunction);
-    createParam(COOLER_ENABLED_STR,       asynParamInt32,   &CoolerEnabledFunction);
-    createParam(COOLER_RUNNING_STR,       asynParamInt32,   &CoolerRunningFunction);
+    status |= createParam(COOLER_STR,               asynParamInt32,   &CoolerFunction);
+    status |= createParam(CCD_TEMP_SETPOINT_STR,    asynParamFloat64, &CCDTempSetpointFunction);
+    status |= createParam(COOLER_TEMP_SETPOINT_STR, asynParamFloat64, &CoolerTempSetpointFunction);
+    status |= createParam(MEAN_SENSOR_TEMP_STR,     asynParamFloat64, &MeanSensorTempFunction);
+    status |= createParam(MAX_SENSOR_TEMP_STR,      asynParamFloat64, &MaxSensorTempFunction);
+    status |= createParam(MIN_SENSOR_TEMP_STR,      asynParamFloat64, &MinSensorTempFunction);
+    status |= createParam(MEAN_COOLER_TEMP_STR,     asynParamFloat64, &MeanCoolerTempFunction);
+    status |= createParam(MAX_COOLER_TEMP_STR,      asynParamFloat64, &MaxCoolerTempFunction);
+    status |= createParam(MIN_COOLER_TEMP_STR,      asynParamFloat64, &MinCoolerTempFunction);
+    status |= createParam(COOLER_ENABLED_STR,       asynParamInt32,   &CoolerEnabledFunction);
+    status |= createParam(COOLER_RUNNING_STR,       asynParamInt32,   &CoolerRunningFunction);
 
     // Vacuum
-    createParam(VACUUM_VALVE_STR,         asynParamInt32,   &VacuumValveFunction);
-    createParam(LINE_PRESSURE_STR,        asynParamFloat64, &LinePressureFunction);
-    createParam(CHAMBER_PRESSURE_STR,     asynParamFloat64, &ChamberPressureFunction);
-    createParam(VACUUM_VALVE_OPEN_STR,    asynParamInt32,   &VacuumValveOpenFunction);
-    createParam(VACUUM_VALVE_ENABLED_STR, asynParamInt32,   &VacuumValveEnabledFunction);
-    createParam(VACUUM_PUMP_RUNNING_STR,  asynParamInt32,   &VacuumPumpRunningFunction);
-    createParam(VACUUM_PUMP_IGNORED_STR,  asynParamInt32,   &VacuumPumpIgnoredFunction);
+    status |= createParam(VACUUM_VALVE_STR,         asynParamInt32,   &VacuumValveFunction);
+    status |= createParam(LINE_PRESSURE_STR,        asynParamFloat64, &LinePressureFunction);
+    status |= createParam(CHAMBER_PRESSURE_STR,     asynParamFloat64, &ChamberPressureFunction);
+    status |= createParam(VACUUM_VALVE_OPEN_STR,    asynParamInt32,   &VacuumValveOpenFunction);
+    status |= createParam(VACUUM_VALVE_ENABLED_STR, asynParamInt32,   &VacuumValveEnabledFunction);
+    status |= createParam(VACUUM_PUMP_RUNNING_STR,  asynParamInt32,   &VacuumPumpRunningFunction);
+    status |= createParam(VACUUM_PUMP_IGNORED_STR,  asynParamInt32,   &VacuumPumpIgnoredFunction);
 
     if (status)
     {
@@ -929,6 +1007,7 @@ ADCrayDl::ADCrayDl(const char *portName, NDDataType_t dataType,
 
     m_rayonixDetector->SendParameters();
 
+    // REVIEW: Use std::printf.
     printf("Opening Detector\n");
     craydl::RxReturnStatus error = m_rayonixDetector->Open();
     if (error.IsError())
@@ -942,6 +1021,7 @@ ADCrayDl::ADCrayDl(const char *portName, NDDataType_t dataType,
 
     if (status)
     {
+        // REVIEW: Bad error message.
         printf("%s:%s epicsThreadCreate failure for image task\n",
             DRIVER_NAME, functionName);
         return;
