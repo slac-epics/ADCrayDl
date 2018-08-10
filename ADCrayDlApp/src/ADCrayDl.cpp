@@ -15,6 +15,7 @@
 #include <unistd.h>
 
 #include <array>
+#include <climits>
 
 #include <epicsTime.h>
 #include <epicsThread.h>
@@ -813,13 +814,7 @@ void ADCrayDl::applyFrameToAD(const craydl::RxFrame *frame_p)
     //         something other than I/O Intr). Consider if you want to do that.
 }
 
-// REVIEW: updateDimensionSize returns an error code which is never checked.
-//         I suggest to remove the return value and just call setIntegerParam
-//         ignoring its the return value. I think that if setIntegerParam does
-//         fail (which it should not if things are configured right), async
-//         will itself log an error - which is fine if you yourself have no
-//         intention to react to an error.
-int ADCrayDl::updateDimensionSize()
+void ADCrayDl::updateDimensionSize()
 {
     int pixelsX = 0;
     int pixelsY = 0;
@@ -836,29 +831,43 @@ int ADCrayDl::updateDimensionSize()
         m_dims[i] = sizes.at(i);
     }
 
-    int status = asynSuccess;
-    status |= setIntegerParam(ADSizeX, pixelsX);
-    status |= setIntegerParam(ADSizeY, pixelsY);
-    status |= setIntegerParam(NDArraySizeX, pixelsX);
-    status |= setIntegerParam(NDArraySizeY, pixelsY);
-    status |= setIntegerParam(NDArraySize, pixelsX * pixelsY * pixelsZ);
-
-    return status;
+    setIntegerParam(ADSizeX, pixelsX);
+    setIntegerParam(ADSizeY, pixelsY);
+    setIntegerParam(NDArraySizeX, pixelsX);
+    setIntegerParam(NDArraySizeY, pixelsY);
+    setIntegerParam(NDArraySize, pixelsX * pixelsY * pixelsZ);
 }
 
 void ADCrayDl::increaseArrayCounter()
 {
-    // REVIEW: Signed integer overflow is undefined behavior - check for max value
-    //         and wrap manually.
-
     int arrayCounter;
     int status = getIntegerParam(NDArrayCounter, &arrayCounter);
-    ++arrayCounter;
+
+    // Check if incrementing will overflow.
+    if (arrayCounter == INT_MAX)
+    {
+        arrayCounter = 0;
+    }
+    else
+    {
+        ++arrayCounter;
+    }
+
     status |= setIntegerParam(NDArrayCounter, arrayCounter);
 
     int imageCounter;
     status |= getIntegerParam(ADNumImagesCounter, &imageCounter);
-    ++imageCounter;
+
+    // Check if incrementing will overflow.
+    if (imageCounter == INT_MAX)
+    {
+        imageCounter = 0;
+    }
+    else
+    {
+        ++imageCounter;
+    }
+
     status |= setIntegerParam(ADNumImagesCounter, imageCounter);
 
     assert(status == 0);

@@ -299,13 +299,10 @@ private:
      */
     void applyFrameToAD(const craydl::RxFrame *frame_p);
 
-    // REVIEW: Return value should be asynStatus not int.
     /**
      * @brief Updates dimension structures based on current binning mode.
-     * 
-     * @return int Success status.
      */
-    int updateDimensionSize();
+    void updateDimensionSize();
 
     // REVIEW: I don't like the two handleCoolingPV overloads differing only in the type
     //         of the value argument. In this case it's fine but there would be potential
