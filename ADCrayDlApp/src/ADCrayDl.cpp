@@ -16,6 +16,7 @@
 
 #include <array>
 #include <climits>
+#include <cstring>
 
 #include <epicsTime.h>
 #include <epicsThread.h>
@@ -47,28 +48,24 @@ namespace
 namespace adcraydl
 {
 
-// REVIEW: There's a lot of std::cerr usage for printing errors. With this it is
-//         unclear where errors are coming from (which module, which device).
-//         Have you considered the logging mechanisms provided by asynPortDriver?
-
 void ADCrayDl::pollDetectorStatus(const double interval_s)
 {
     while (m_running.get())
     {
         // REVIEW: Explain what is happening here. Where does the queried status
         //         go? Does this synchonously call some of the callbacks?
-
         const craydl::RxReturnStatus status = m_rayonixDetector->QueryStatus();
         if (status.IsError())
         {
-            std::cerr << "Error querying status: " << status.ErrorText() << std::endl;
+            asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+              "Error querying status: %s\n", status.ErrorText().c_str());
         }
 
         epicsThreadSleep(interval_s);
     }
 }
 
-bool ADCrayDl::handleCoolingPV(const int function, const epicsInt32 value, asynStatus &status)
+bool ADCrayDl::handleCoolingPVInt(const int function, const epicsInt32 value, asynStatus &status)
 {
     if (function == CoolerFunction)
     {
@@ -84,8 +81,9 @@ bool ADCrayDl::handleCoolingPV(const int function, const epicsInt32 value, asynS
 
         if (error.IsError())
         {
-            const std::string command = (value == 0) ? "disabling" : "enabling";
-            std::cerr << "Error " << command << " cooler: " << error.ErrorText() << std::endl;
+            const char *command = (value == 0) ? "disabling" : "enabling";
+            asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+              "Error %s the cooler: %s\n", command, error.ErrorText().c_str());
 
             status = asynError;
         }
@@ -96,7 +94,7 @@ bool ADCrayDl::handleCoolingPV(const int function, const epicsInt32 value, asynS
     return false;
 }
 
-bool ADCrayDl::handleVacuumPV(const int function, const epicsInt32 value, asynStatus &status)
+bool ADCrayDl::handleVacuumPVInt(const int function, const epicsInt32 value, asynStatus &status)
 {
     if (function == VacuumValveFunction)
     {
@@ -113,8 +111,9 @@ bool ADCrayDl::handleVacuumPV(const int function, const epicsInt32 value, asynSt
 
         if (error.IsError())
         {
-            const std::string command = (value == 0) ? "disabling" : "enabling";
-            std::cerr << "Error " << command << " vacuum valve: " << error.ErrorText() << std::endl;
+            const char *command = (value == 0) ? "disabling" : "enabling";
+            asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+              "Error %s the vacuum valve: %s\n", command, error.ErrorText().c_str());
             status = asynError;
         }
 
@@ -124,7 +123,7 @@ bool ADCrayDl::handleVacuumPV(const int function, const epicsInt32 value, asynSt
     return false;
 }
 
-bool ADCrayDl::handleCoolingPV(const int function, const epicsFloat64 value, asynStatus &status)
+bool ADCrayDl::handleCoolingPVFloat(const int function, const epicsFloat64 value, asynStatus &status)
 {
     if (function == CCDTempSetpointFunction)
     {
@@ -132,7 +131,8 @@ bool ADCrayDl::handleCoolingPV(const int function, const epicsFloat64 value, asy
         
         if (error.IsError())
         {
-            std::cerr << "Error setting CCD temperature setpoint: " << error.ErrorText() << std::endl;
+            asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+                "Error setting CCD temperature setpoint: %s\n", error.ErrorText().c_str());
             status = asynError;
         }
         
@@ -144,7 +144,8 @@ bool ADCrayDl::handleCoolingPV(const int function, const epicsFloat64 value, asy
 
         if (error.IsError())
         {
-            std::cerr << "Error setting cooler temperature setpoint: " << error.ErrorText() << std::endl;
+            asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+                "Error setting cooler temperature setpoint: %s\n", error.ErrorText().c_str());
             status = asynError;
         }
 
@@ -172,7 +173,9 @@ int ADCrayDl::getNumImagesToAcquire()
             return m_numImages;
 
         default:
-            throw std::runtime_error("Unknown image mode value not in enum");
+            asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+                    "Unknown image mode: %d\n", imageMode);
+            return m_numImages;
     }
 }
 
@@ -203,7 +206,8 @@ asynStatus ADCrayDl::writeInt32(asynUser *pasynUser, epicsInt32 value)
     {
         callParamCallbacks();
 
-        printf("%s: Detected change of ADAcquire to %d\n", DRIVER_NAME, value );
+        asynPrint(pasynUserSelf, ASYN_TRACEIO_DRIVER,
+            "%s: Detected change of ADAcquire to %d\n", DRIVER_NAME, value);
 
         if (value)
         {
@@ -216,7 +220,8 @@ asynStatus ADCrayDl::writeInt32(asynUser *pasynUser, epicsInt32 value)
                 craydl::RxReturnStatus error = m_rayonixDetector->SetupAcquisitionSequence(getNumImagesToAcquire());
                 if (error.IsError())
                 {
-                    std::cerr << "Could not setup acquisition sequence to " << m_numImages << " images" << std::endl;
+                    asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+                        "Could not setup acquisition sequence to  %d images\n", m_numImages);
                     status = asynError;
                     continue; // Skip other code.
                 }
@@ -224,7 +229,8 @@ asynStatus ADCrayDl::writeInt32(asynUser *pasynUser, epicsInt32 value)
                 error = m_rayonixDetector->SendParameters();
                 if (error.IsError())
                 {
-                    std::cerr << "Could not send parameters to detector" << std::endl;
+                    asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+                        "Could not send parameters to detector\n");
                     status = asynError;
                     continue; // Skip other code.
                 }
@@ -234,32 +240,28 @@ asynStatus ADCrayDl::writeInt32(asynUser *pasynUser, epicsInt32 value)
                 error = m_rayonixDetector->StartAcquisition(frame_type);
                 if (error.IsError())
                 {
-                    std::cerr << "Could not start acquisition" << std::endl;
+                    asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+                        "Could not start acquisition\n");
                     status = asynError;
                     continue; // Skip other code.
                 }
             } while (false);
 
-            // REVIEW: Seems like you allow any non-zero value to start acquisition and
-            //         will actually set ADAcquire to whatever value was written, but
-            //         I don't see any different meaning. Why not call
-            //         setIntegerParam(ADAcquire, 1) here to make sure the stored value
-            //         is always 0 or 1?
+            setIntegerParam(ADAcquire, 1);
         }
         else
         {
-            // REVIEW: Explain "true" argument (e.g. add inline comment like /*argumentName=*/true).
             // Stop acquisition
-            craydl::RxReturnStatus error = m_rayonixDetector->EndAcquisition(true);
+            craydl::RxReturnStatus error = m_rayonixDetector->EndAcquisition(/*abort=*/true);
             if (error.IsError())
             {
-                std::cerr << "Could not end acquisition" << std::endl;
+                asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+                    "Could not end acquisition\n");
                 status = asynError;
             }
 
-            // REVIEW: Variable shadows another variable from parent scope, rename it.
-            const int status = setIntegerParam(ADAcquire, 0);
-            assert(status == 0);
+            const int resetADAcquireStatus = setIntegerParam(ADAcquire, 0);
+            assert(resetADAcquireStatus == 0);
         }
     }
     else if (function == ADNumImages)
@@ -268,14 +270,11 @@ asynStatus ADCrayDl::writeInt32(asynUser *pasynUser, epicsInt32 value)
     }
     else if (function == BinningFunction)
     {
-        std::cout << "Setting binning" << std::endl;
         int binningValue = 1;
 
         switch (value)
         {
             case BinningMode1x1:
-            // REVIEW: Error on unknown value?
-            default:
                 binningValue = 1;
                 break;
 
@@ -298,12 +297,20 @@ asynStatus ADCrayDl::writeInt32(asynUser *pasynUser, epicsInt32 value)
             case BinningMode10x10:
                 binningValue = 10;
                 break;
+            
+            default:
+                asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+                    "Unknown binning mode: %d\n", value);
+                binningValue = 1;
+                setIntegerParam(BinningFunction, BinningMode1x1);
+                break;
         }
 
         const craydl::RxReturnStatus error = m_rayonixDetector->SetBinning(binningValue, binningValue);
         if (error.IsError())
         {
-            std::cerr << "Binning " << binningValue << "x" << binningValue << " was not allowed: " << error.ErrorText() << std::endl;
+            asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+                "Binning %dx%d was not allowed: %s\n", binningValue, binningValue, error.ErrorText().c_str());
             status = asynError;
         }
         else
@@ -318,10 +325,21 @@ asynStatus ADCrayDl::writeInt32(asynUser *pasynUser, epicsInt32 value)
 
         switch (value)
         {
-            case TriggerModeFreeRun:
-            case TriggerModeLCLSMode: // TODO: LCLS mode is not yet implemented in the craydl SDK.
-            // REVIEW: Error on unknown value or unsupported LCLSMode?
             default:
+                asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+                    "Unknown trigger mode: %d\n", value);
+                setIntegerParam(ADTriggerMode, TriggerModeFreeRun);
+                triggerMode = craydl::FrameTriggerTypeNone;
+                break;
+
+            case TriggerModeLCLSMode: // TODO: LCLS mode is not yet implemented in the craydl SDK.
+                asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+                    "Unsupported LCLS trigger mode!\n");
+                setIntegerParam(ADTriggerMode, TriggerModeFreeRun);
+                triggerMode = craydl::FrameTriggerTypeNone;
+                break;
+
+            case TriggerModeFreeRun:
                 triggerMode = craydl::FrameTriggerTypeNone;
                 break;
 
@@ -337,7 +355,8 @@ asynStatus ADCrayDl::writeInt32(asynUser *pasynUser, epicsInt32 value)
         const craydl::RxReturnStatus error = m_rayonixDetector->SetFrameTriggerMode(craydl::FrameTriggerType(triggerMode));
         if (error.IsError())
         {
-            std::cerr << "Error setting trigger mode " << value << ", error: " << error.ErrorText() << std::endl;
+            asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+                "Error setting trigger mode %d, error: %s\n", value, error.ErrorText().c_str());
             status = asynError;
         }
     }
@@ -348,20 +367,26 @@ asynStatus ADCrayDl::writeInt32(asynUser *pasynUser, epicsInt32 value)
         switch (value)
         {
             case ReadoutModeStandard:
-            // REVIEW: Error on unknown value?
-            default:
                 readoutMode = craydl::ReadoutModeStandard;
                 break;
             
             case ReadoutModeLowNoise:
                 readoutMode = craydl::ReadoutModeLowNoise;
                 break;
+
+            default:
+                asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+                    "Unknown readout mode: %d\n", value);
+                readoutMode = craydl::ReadoutModeStandard;
+                setIntegerParam(ReadoutModeFunction, ReadoutModeStandard);
+                break;
         }
 
         const craydl::RxReturnStatus error = m_rayonixDetector->SetReadoutMode(craydl::ReadoutMode(readoutMode));
         if (error.IsError())
         {
-            std::cerr << "Error setting readout mode " << value << ", error: " << error.ErrorText() << std::endl;
+            asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+                "Error setting readout mode %d, error: %s\n", value, error.ErrorText().c_str());
             status = asynError;
         }
     }
@@ -371,14 +396,15 @@ asynStatus ADCrayDl::writeInt32(asynUser *pasynUser, epicsInt32 value)
     }
     else if (function == AcquirePedestalFunction)
     {
-        std::cout << "Going to acquire pedestal" << std::endl;
+        asynPrint(pasynUserSelf, ASYN_TRACEIO_DRIVER,
+            "Going to acquire pedestal");
 
-        // REVIEW: Explain "false" argument (e.g. add inline comment like /*argumentName=*/false).
         // Trigger pedestal acquisition
-        const craydl::RxReturnStatus error = m_rayonixDetector->AcquireNewBackground(false, m_numPedestals);
+        const craydl::RxReturnStatus error = m_rayonixDetector->AcquireNewBackground(/*block=*/false, m_numPedestals);
         if (error.IsError())
         {
-            std::cerr << "Error acquiring pedestals, error: " << error.ErrorText() << std::endl;
+            asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+                "Error acquiring pedestals, error: %s\n", error.ErrorText().c_str());
             status = asynError;
         }
     }
@@ -448,18 +474,20 @@ asynStatus ADCrayDl::writeInt32(asynUser *pasynUser, epicsInt32 value)
         const craydl::RxReturnStatus error = m_rayonixDetector->SetFrameTriggerSignalType(craydl::DigitalIOSignalType(digitalIOSignalType));
         if (error.IsError())
         {
-            std::cerr << "Error setting trigger signal type " << value << ", error: " << error.ErrorText() << std::endl;
+            asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+                "Error setting trigger signal type %d, error: %s\n", value, error.ErrorText().c_str());
             status = asynError;
         }
     }
-    else if (SoftwareBulbFunction)
+    else if (function == SoftwareBulbFunction)
     {
-        if (value)
+        if (value != 0)
         {
             const craydl::RxReturnStatus error = m_rayonixDetector->SqueezeBulb();
             if (error.IsError())
             {
-                std::cerr << "Error calling SqueezeBulb " << value << ", error: " << error.ErrorText() << std::endl;
+                asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+                    "Error calling SqueezeBulb %d, error: %s\n", value, error.ErrorText().c_str());
                 status = asynError;
             }
         }
@@ -468,17 +496,18 @@ asynStatus ADCrayDl::writeInt32(asynUser *pasynUser, epicsInt32 value)
             const craydl::RxReturnStatus error = m_rayonixDetector->ReleaseBulb();
             if (error.IsError())
             {
-                std::cerr << "Error calling ReleaseBulb " << value << ", error: " << error.ErrorText() << std::endl;
+                asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+                    "Error calling ReleaseBulb %d, error: %s\n", value, error.ErrorText().c_str());
                 status = asynError;
             }
         }
     }
     else // Check if these are cooling of vacuum PVs
     {
-        const bool isCooling = handleCoolingPV(function, value, status);
+        const bool isCooling = handleCoolingPVInt(function, value, status);
         if (!isCooling)
         {
-            handleVacuumPV(function, value, status);
+            handleVacuumPVInt(function, value, status);
         }
     }
 
@@ -525,23 +554,24 @@ asynStatus ADCrayDl::writeFloat64(asynUser *pasynUser, epicsFloat64 value)
         const craydl::RxReturnStatus error = m_rayonixDetector->SetExposureTime(value);
         if (error.IsError())
         {
-            std::cerr << "Error setting acquire time " << value << ", error: " << error.ErrorText() << std::endl;
+            asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+                "Error setting acquire time %f, error: %s\n", value, error.ErrorText().c_str());
             status = asynError;
         }
     }
     else if (function == ADAcquirePeriod)
     {
-        std::cout << "Setting interval" << std::endl;
         const craydl::RxReturnStatus error = m_rayonixDetector->SetIntervalTime(value);
         if (error.IsError())
         {
-            std::cerr << "Error setting interval time " << value << ", error: " << error.ErrorText() << std::endl;
+            asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+                "Error setting interval time %f, error: %s\n", value, error.ErrorText().c_str());
             status = asynError;
         }
     }
     else // Check if these are cooling PVs
     {
-        handleCoolingPV(function, value, status);
+        handleCoolingPVFloat(function, value, status);
     }
 
     /* Do callbacks so higher layers see any changes */
@@ -581,6 +611,8 @@ asynStatus ADCrayDl::writeFloat64(asynUser *pasynUser, epicsFloat64 value)
 
 void ADCrayDl::VirtualStatusChanged(const craydl::VStatusParameter *vstatus)
 {
+    std::lock_guard<ADCrayDl> lock(*this); // Lock asyn driver;
+
     // Conversion from string to double will throw an exception if the conversion isn't successful.
     switch (vstatus->key())
     {
@@ -626,6 +658,8 @@ void ADCrayDl::VirtualStatusChanged(const craydl::VStatusParameter *vstatus)
 
 void ADCrayDl::StatusFlagChanged(const craydl::VStatusFlag *vstatus)
 {
+    std::lock_guard<ADCrayDl> lock(*this); // Lock asyn driver;
+
     switch (vstatus->key())
     {
         case craydl::StatusFlagCoolersEnabled:
@@ -671,6 +705,8 @@ void ADCrayDl::SequenceStarted()
 
 void ADCrayDl::SequenceEnded()
 {
+    std::lock_guard<ADCrayDl> lock(*this); // Lock asyn driver;
+
     const int status = setIntegerParam(ADAcquire, 0);
     assert(status == 0);
 
@@ -748,50 +784,17 @@ void ADCrayDl::RawFrameReady(int frame_number, const craydl::RxFrame *frame_p)
 
 void ADCrayDl::FrameReady(int frame_number, const craydl::RxFrame *frame_p)
 {
-    applyFrameToAD(frame_p);
-}
-
-void ADCrayDl::FrameAborted(int frame_number)
-{
-    // Intentionally empty.
-}
-
-void ADCrayDl::FrameCompleted(int frame_number)
-{
-    // Intentionally empty.
-}
-
-void ADCrayDl::FrameError(int frame_number, const craydl::RxFrame *frame_p, int error_code, const std::string &error_string)
-{
-    std::cerr << "Error with frame: " << error_string << std::endl;
-}
-
-// REVIEW: Why not put this code directly into FrameReady?
-void ADCrayDl::applyFrameToAD(const craydl::RxFrame *frame_p)
-{
     // Get timestamp of frame
     epicsTimeStamp newEvrTime;
     updateTimeStamp(&newEvrTime);
 
     NDArray *inArray = pNDArrayPool->alloc(NUM_DIMS, m_dims, NDUInt16, frame_p->getSize(), NULL);
 
-    // REVIEW: The m_dimsOut and initDimension seems to do nothing. The documentation
-    //         for initDimension says: "Initializes the dimension structure to size=size,
-    //         binning=1, reverse=0, offset=0.". So you're initializing these NDDimension_t
-    //         structures here and also in updateDimensionSize, and you use them nowhere?
-    for (size_t i = 0; i < NUM_DIMS; i++)
-    {
-        inArray->initDimension(&m_dimsOut[i], m_dims[i]);
-    }
-
-    // REVIEW: Use std::memcpy and include <cstring>.
     // The dimensions are the same and the data type is the same, just copy the input image to the output image.
-    memcpy(inArray->pData, frame_p->getBufferAddress(), frame_p->getSize());
+    std::memcpy(inArray->pData, frame_p->getBufferAddress(), frame_p->getSize());
 
     // Set timestamp
     inArray->epicsTS = newEvrTime;
-
-    // std::cout << "The new timestamp is " << inArray->epicsTS.secPastEpoch << std::endl;
 
     increaseArrayCounter();
 
@@ -812,6 +815,22 @@ void ADCrayDl::applyFrameToAD(const craydl::RxFrame *frame_p)
     //         that allows EPICS to specifically read the latest frame even while
     //         array callbacks are disabled (using record with SCAN set to
     //         something other than I/O Intr). Consider if you want to do that.
+}
+
+void ADCrayDl::FrameAborted(int frame_number)
+{
+    // Intentionally empty.
+}
+
+void ADCrayDl::FrameCompleted(int frame_number)
+{
+    // Intentionally empty.
+}
+
+void ADCrayDl::FrameError(int frame_number, const craydl::RxFrame *frame_p, int error_code, const std::string &error_string)
+{
+    asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+        "Error with frame: %s\n", error_string.c_str());
 }
 
 void ADCrayDl::updateDimensionSize()
@@ -955,7 +974,8 @@ ADCrayDl::ADCrayDl(const char *portName, NDDataType_t dataType,
 
     if (status)
     {
-        printf("%s: unable to set camera parameters\n", functionName);
+        asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+            "Unable to set camera parameters\n");
         return;
     }
 
@@ -1021,7 +1041,8 @@ ADCrayDl::ADCrayDl(const char *portName, NDDataType_t dataType,
     craydl::RxReturnStatus error = m_rayonixDetector->Open();
     if (error.IsError())
     {
-        printf("%s: Unable to open detector", error.ErrorText().c_str());
+        asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+            "Unable to open detector: %s\n", error.ErrorText().c_str());
         return;
     }
 

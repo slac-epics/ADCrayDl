@@ -72,13 +72,12 @@ public:
         m_value = value;
     }
 
-    // REVIEW: make get() const, and to make that work make m_mutex mutable.
     /**
      * @brief Concurrent getter.
      * 
      * @return Stored value.
      */
-    bool get()
+    bool get() const
     {
         std::lock_guard<epicsMutex> lock(m_mutex);
         return m_value;
@@ -86,17 +85,15 @@ public:
 
 private:
     bool m_value;       //!< Value stored in this class.
-    epicsMutex m_mutex; //!< Mutex used by the thread.
+    mutable epicsMutex m_mutex; //!< Mutex used by the thread.
 };
 
-// REVIEW: Inherit VirtualFrameCallback and VirtualKeyedStateChangeCallback privately
-//         and overridden functions should be privated.
 /**
  * @brief areaDetector module for the Rayonix CrayDl SDK and its supported detectors.
  */
 class epicsShareClass ADCrayDl : public ADDriver,
-                                 public craydl::VirtualFrameCallback,
-                                 public craydl::VirtualKeyedStateChangeCallback
+                                 private craydl::VirtualFrameCallback,
+                                 private craydl::VirtualKeyedStateChangeCallback
 {
 public:
     /**
@@ -111,10 +108,45 @@ public:
      */
     virtual ~ADCrayDl();
 
-    // REVIEW: I think the virtual keyword should not be used for functions which
-    //         override a virtual function in a base class, especially if it is not
-    //         meant to be further overridden from a derived class (which is the
-    //         case here).
+private:
+    static const std::size_t NUM_DIMS = 2; //!< Number of dimensions in image.
+
+    enum TriggerMode
+    {
+        TriggerModeFreeRun  = 0,
+        TriggerModeEdge     = 1,
+        TriggerModeBulb     = 2,
+        TriggerModeLCLSMode = 3
+    };
+
+    enum DigitalIOSignalType
+    {
+        DigitalIOSignalTypeNone                 = 0,
+        DigitalIOSignalTypeOpto                 = 1,
+        DigitalIOSignalTypeOptoInverted         = 2,
+        DigitalIOSignalTypeCMOS                 = 3,
+        DigitalIOSignalTypeCMOSPullDown         = 4,
+        DigitalIOSignalTypeCMOSPullUp           = 5,
+        DigitalIOSignalTypeCMOSPullDownInverted = 6,
+        DigitalIOSignalTypeCMOSPullUpInverted   = 7,
+        DigitalIOSignalTypeSoftware             = 8
+    };
+
+    enum ReadoutMode
+    {
+        ReadoutModeStandard = 0,
+        ReadoutModeLowNoise = 1
+    };
+
+    enum BinningMode
+    {
+        BinningMode1x1   = 0,
+        BinningMode2x2   = 1,
+        BinningMode3x3   = 2,
+        BinningMode4x4   = 3,
+        BinningMode6x6   = 4,
+        BinningMode10x10 = 5
+    };
 
     /**
      * @brief Called when asyn writes integer data.
@@ -126,7 +158,7 @@ public:
      * @param value       Value to write. 
      * @return asynStatus Success or failure status of the operation.
      */
-    virtual asynStatus writeInt32(asynUser *pasynUser, epicsInt32 value);
+    asynStatus writeInt32(asynUser *pasynUser, epicsInt32 value);
 
     /**
      * @brief Called when asyn writes float data.
@@ -138,25 +170,29 @@ public:
      * @param value       Value to write. 
      * @return asynStatus Success or failure status of the operation.
      */
-    virtual asynStatus writeFloat64(asynUser *pasynUser, epicsFloat64 value);
+    asynStatus writeFloat64(asynUser *pasynUser, epicsFloat64 value);
 
-    // REVIEW: I suggest to somehow group the callbacks (comments?) to make it
-    //         clear these are callbacks, possibly into separate sections for
-    //         VirtualFrameCallback and VirtualKeyedStateChangeCallback.
+    // =============================================
+    // ======== Detector status callbacks ==========
+    // =============================================
 
     /**
      * @brief Called when a virtual status changes (e.g. detector temperature).
      * 
      * @param vstatus The virtual status that changed.
      */
-    virtual void VirtualStatusChanged(const craydl::VStatusParameter *vstatus);
+    void VirtualStatusChanged(const craydl::VStatusParameter *vstatus);
 
     /**
      * @brief Called when a status flag changes (e.g. cooler turned on).
      * 
      * @param vstatus The status flag that changed.
      */
-    virtual void StatusFlagChanged(const craydl::VStatusFlag *vstatus);
+    void StatusFlagChanged(const craydl::VStatusFlag *vstatus);
+
+    // =============================================
+    // ====== Detector acquisition callbacks =======
+    // =============================================
 
     /**
      * @brief Executes when acquisition sequence starts.
@@ -243,47 +279,9 @@ public:
      */
     void FrameError(int frame_number, const craydl::RxFrame *frame_p, int error_code, const std::string &error_string);
 
-private:
-    static const size_t NUM_DIMS = 2; //!< Number of dimensions in image.
-
-    // REVIEW: I suggest to use scoped enums (enum class), GCC 4.4 supports that.
-    //         If you do that, remove the prefix from the enum values.
-    enum TriggerMode
-    {
-        TriggerModeFreeRun  = 0,
-        TriggerModeEdge     = 1,
-        TriggerModeBulb     = 2,
-        TriggerModeLCLSMode = 3
-    };
-
-    enum DigitalIOSignalType
-    {
-        DigitalIOSignalTypeNone                 = 0,
-        DigitalIOSignalTypeOpto                 = 1,
-        DigitalIOSignalTypeOptoInverted         = 2,
-        DigitalIOSignalTypeCMOS                 = 3,
-        DigitalIOSignalTypeCMOSPullDown         = 4,
-        DigitalIOSignalTypeCMOSPullUp           = 5,
-        DigitalIOSignalTypeCMOSPullDownInverted = 6,
-        DigitalIOSignalTypeCMOSPullUpInverted   = 7,
-        DigitalIOSignalTypeSoftware             = 8
-    };
-
-    enum ReadoutMode
-    {
-        ReadoutModeStandard = 0,
-        ReadoutModeLowNoise = 1
-    };
-
-    enum BinningMode
-    {
-        BinningMode1x1   = 0,
-        BinningMode2x2   = 1,
-        BinningMode3x3   = 2,
-        BinningMode4x4   = 3,
-        BinningMode6x6   = 4,
-        BinningMode10x10 = 5
-    };
+    // =============================================
+    // ================ Utilities ==================
+    // =============================================
 
     /**
      * @brief Task that polls detector for current status.
@@ -293,21 +291,19 @@ private:
     void pollDetectorStatus(const double interval_s);
 
     /**
-     * @brief Takes the frame and copies it to an NDArray. It then submits the data to subscribed plugins.
-     * 
-     * @param frame_p Frame with the image.
-     */
-    void applyFrameToAD(const craydl::RxFrame *frame_p);
-
-    /**
      * @brief Updates dimension structures based on current binning mode.
      */
     void updateDimensionSize();
 
-    // REVIEW: I don't like the two handleCoolingPV overloads differing only in the type
-    //         of the value argument. In this case it's fine but there would be potential
-    //         for problems if one was int32 and the other other int64, due to default
-    //         promotions. I suggest to use different function names.
+    /**
+     * @brief This method checks if the provided function corresponds to a cooling PV and tries to handle it.
+     * 
+     * @param function     Function of the write operation.
+     * @param value        Value being written.
+     * @param status [out] Used to return status.
+     * @return             True when function was handled by this method, false when not.
+     */
+    bool handleCoolingPVInt(const int function, const epicsInt32 value, asynStatus &status);
 
     /**
      * @brief This method checks if the provided function corresponds to a cooling PV and tries to handle it.
@@ -317,17 +313,7 @@ private:
      * @param status [out] Used to return status.
      * @return             True when function was handled by this method, false when not.
      */
-    bool handleCoolingPV(const int function, const epicsInt32 value, asynStatus &status);
-
-    /**
-     * @brief This method checks if the provided function corresponds to a cooling PV and tries to handle it.
-     * 
-     * @param function     Function of the write operation.
-     * @param value        Value being written.
-     * @param status [out] Used to return status.
-     * @return             True when function was handled by this method, false when not.
-     */
-    bool handleCoolingPV(const int function, const epicsFloat64 value, asynStatus &status);
+    bool handleCoolingPVFloat(const int function, const epicsFloat64 value, asynStatus &status);
 
     /**
      * @brief This method checks if the provided function corresponds to a vacuum PV and tries to handle it.
@@ -337,7 +323,7 @@ private:
      * @param status [out] Used to return status.
      * @return             True when function was handled by this method, false when not.
      */
-    bool handleVacuumPV(const int function, const epicsInt32 value, asynStatus &status);
+    bool handleVacuumPVInt(const int function, const epicsInt32 value, asynStatus &status);
 
     /**
      * @brief Increases the array count by one.
@@ -373,11 +359,11 @@ private:
      * @param timestamp Seconds since Epics epoch.
      * @return std::string Formated time string.
      */
-    static std::string secondsSinceEpochToString(const time_t timestamp);
+    static std::string secondsSinceEpochToString(const std::time_t timestamp);
 
     std::unique_ptr<craydl::RxDetector> m_rayonixDetector; //!< SDK detector object.
     NDDimension_t m_dimsOut[NUM_DIMS]; //!< Array of dimension properties.
-    size_t m_dims[NUM_DIMS];           //!< Array of dimension sizes.
+    std::size_t m_dims[NUM_DIMS];      //!< Array of dimension sizes.
 
     // Polling thread
     AtomicBool m_running;        //!< Flag that indicates if the polling thread should keep running or stop.
