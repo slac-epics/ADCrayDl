@@ -967,7 +967,7 @@ ADCrayDl::ADCrayDl(const char *portName, NDDataType_t dataType,
     if (status)
     {
         asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
-            "Unable to set camera parameters\n");
+            "Unable to create camera parameters\n");
         return;
     }
 
@@ -1029,7 +1029,7 @@ ADCrayDl::ADCrayDl(const char *portName, NDDataType_t dataType,
     m_rayonixDetector->SendParameters();
 
     asynPrint(pasynUserSelf, ASYN_TRACEIO_DEVICE, "Opening detector\n");
-
+    
     craydl::RxReturnStatus error = m_rayonixDetector->Open();
     if (error.IsError())
     {
