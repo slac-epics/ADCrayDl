@@ -52,7 +52,7 @@ asynSetMinTimerPeriod(0.001)
 # Do not set EPICS_CA_MAX_ARRAY_BYTES to a value much larger than that required, because EPICS Channel Access actually
 # allocates arrays of this size every time it needs a buffer larger than 16K.
 # Uncomment the following line to set it in the IOC.
-epicsEnvSet("EPICS_CA_MAX_ARRAY_BYTES", "1000000000")
+epicsEnvSet("EPICS_CA_MAX_ARRAY_BYTES", "250000000")
 
 # Configure a PMC EVR
 # ErDebugLevel( 99 )
