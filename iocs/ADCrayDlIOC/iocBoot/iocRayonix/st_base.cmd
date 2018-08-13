@@ -99,7 +99,7 @@ set_savefile_path("./autosave")
 create_monitor_set("auto_settings.req", 10, "P=$(PREFIX),IOC=$(PREFIX)$(CAM_PREFIX)")
 
 # Readout times for different binning and readout modes.
-system "caput -a $(PREFIX)$(CAM_PREFIX)BinningAndReadoutReadoutTimes 12 0.424 0.12 0.061 0.0381 0.021 0.0112 0.5347 0.1467 0.0737 0.0449 0.024 0.0121"
+system "caput -a $(PREFIX)$(CAM_PREFIX)BinningAndReadoutReadoutTimes 12 0.483 0.146 0.082 0.05 0.026 0.014 0.592 0.177 0.094 0.057 0.03 0.015"
 
 dbpf $(TSS):TsPolicy SYNCED
 

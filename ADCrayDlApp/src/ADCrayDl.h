@@ -23,10 +23,6 @@
 namespace adcraydl
 {
 
-// REVIEW: C++ code should use std::uint32_t, std::size_t, std::time_t etc. not global
-// names from the C headers. In any case the right headers should be included (cstdint,
-// cstddef, ctime).
-
 static const std::uint32_t DRIVER_VERSION      = 1;
 static const std::uint32_t DRIVER_REVISION     = 0;
 static const std::uint32_t DRIVER_MODIFICATION = 0;
@@ -84,7 +80,7 @@ public:
     }
 
 private:
-    bool m_value;       //!< Value stored in this class.
+    bool m_value; //!< Value stored in this class.
     mutable epicsMutex m_mutex; //!< Mutex used by the thread.
 };
 

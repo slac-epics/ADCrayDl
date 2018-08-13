@@ -796,6 +796,8 @@ void ADCrayDl::FrameReady(int frame_number, const craydl::RxFrame *frame_p)
     // Set timestamp
     inArray->epicsTS = newEvrTime;
 
+    std::lock_guard<ADCrayDl> lock(*this); // Lock asyn driver;
+
     increaseArrayCounter();
 
     // Call callbacks.
@@ -1036,8 +1038,7 @@ ADCrayDl::ADCrayDl(const char *portName, NDDataType_t dataType,
 
     m_rayonixDetector->SendParameters();
 
-    // REVIEW: Use std::printf.
-    printf("Opening Detector\n");
+    std::cout << "Opening Detector" << std::endl;
     craydl::RxReturnStatus error = m_rayonixDetector->Open();
     if (error.IsError())
     {
