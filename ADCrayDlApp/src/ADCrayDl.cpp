@@ -52,8 +52,7 @@ void ADCrayDl::pollDetectorStatus(const double interval_s)
 {
     while (m_running.get())
     {
-        // REVIEW: Explain what is happening here. Where does the queried status
-        //         go? Does this synchonously call some of the callbacks?
+        // Queries the detector which then calls VirtualStatusChanged and StatusFlagChanged.
         const craydl::RxReturnStatus status = m_rayonixDetector->QueryStatus();
         if (status.IsError())
         {
@@ -179,42 +178,43 @@ int ADCrayDl::getNumImagesToAcquire()
     }
 }
 
-/** Called when asyn clients call pasynInt32->write().
-  * This function performs actions for some parameters, including ADAcquire, ADColorMode, etc.
-  * For all parameters it sets the value in the parameter library and calls any registered callbacks..
-  * \param[in] pasynUser pasynUser structure that encodes the reason and address.
-  * \param[in] value Value to write. */
+bool ADCrayDl::isAcquisitionRunning()
+{
+    int acquireValue;
+    const int status = getIntegerParam(ADAcquire, &acquireValue);
+    assert(status == 0);
+
+    return acquireValue;
+}
+
 asynStatus ADCrayDl::writeInt32(asynUser *pasynUser, epicsInt32 value)
 {
     const int function = pasynUser->reason;
 
-    // REVIEW: I think it is not appropriate to unconditionally print this to cout,
-    //         the logging should be somehow configurable. The people who maintain
-    //         IOCs will not like the console being spammed. Actually, IIRC asyn
-    //         has some built-in logging of parameter reads and writes, but I don't
-    //         know the details. Maybe look at how popular / good quality drivers
-    //         do it.
-    std::cout << "writeInt32 func: " << function << ", value: " << value << std::endl;
+    if (isAcquisitionRunning() && function != ADAcquire)
+    {
+        // Changing parameters while acquisition is running is not allowed.
+        asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+            "Changing parameters during acquisition is not allowed.");
+        
+        return asynError;
+    }
+
+    asynPrint(pasynUserSelf, ASYN_TRACEIO_DEVICE,
+            "writeInt32 func: %d, value %d\n", function, value);
 
     // Set the parameter
     asynStatus status = ADDriver::writeInt32(pasynUser, value);
 
-    // REVIEW: Are the various configuration changes safe while acquisition is active?
-
     /* This is where the parameter is sent to the SDK */
     if (function == ADAcquire)
     {
-        callParamCallbacks();
-
-        asynPrint(pasynUserSelf, ASYN_TRACEIO_DRIVER,
+        asynPrint(pasynUserSelf, ASYN_TRACEIO_DEVICE,
             "%s: Detected change of ADAcquire to %d\n", DRIVER_NAME, value);
 
         if (value)
         {
-            // REVIEW: Is it safe to do all these things if acquisition is already started?
-            //         Maybe you could try to stop acquisition if already active, or just
-            //         reject the command.
-
+            unlock(); // Unlock while we do this.
             do // This do-while is a convenient solution to error handling. We can jump out of the block early.
             {
                 craydl::RxReturnStatus error = m_rayonixDetector->SetupAcquisitionSequence(getNumImagesToAcquire());
@@ -237,6 +237,7 @@ asynStatus ADCrayDl::writeInt32(asynUser *pasynUser, epicsInt32 value)
 
                 // Starts Acquisition of series of frames - Light means operated shutter I/O output signal
                 craydl::FrameAcquisitionType frame_type = craydl::FrameAcquisitionTypeLight;
+                
                 error = m_rayonixDetector->StartAcquisition(frame_type);
                 if (error.IsError())
                 {
@@ -247,11 +248,14 @@ asynStatus ADCrayDl::writeInt32(asynUser *pasynUser, epicsInt32 value)
                 }
             } while (false);
 
+            lock();
             setIntegerParam(ADAcquire, 1);
         }
         else
         {
             // Stop acquisition
+            unlock();
+
             craydl::RxReturnStatus error = m_rayonixDetector->EndAcquisition(/*abort=*/true);
             if (error.IsError())
             {
@@ -259,6 +263,8 @@ asynStatus ADCrayDl::writeInt32(asynUser *pasynUser, epicsInt32 value)
                     "Could not end acquisition\n");
                 status = asynError;
             }
+
+            lock();
 
             const int resetADAcquireStatus = setIntegerParam(ADAcquire, 0);
             assert(resetADAcquireStatus == 0);
@@ -396,7 +402,7 @@ asynStatus ADCrayDl::writeInt32(asynUser *pasynUser, epicsInt32 value)
     }
     else if (function == AcquirePedestalFunction)
     {
-        asynPrint(pasynUserSelf, ASYN_TRACEIO_DRIVER,
+        asynPrint(pasynUserSelf, ASYN_TRACEIO_DEVICE,
             "Going to acquire pedestal");
 
         // Trigger pedestal acquisition
@@ -420,7 +426,9 @@ asynStatus ADCrayDl::writeInt32(asynUser *pasynUser, epicsInt32 value)
             // Start querying.
             if (m_pollingThread.joinable())
             {
+                unlock();
                 m_pollingThread.join();
+                lock();
             }
 
             m_running = true;
@@ -522,7 +530,7 @@ asynStatus ADCrayDl::writeInt32(asynUser *pasynUser, epicsInt32 value)
     }
     else
     {
-        asynPrint(pasynUser, ASYN_TRACEIO_DRIVER,
+        asynPrint(pasynUser, ASYN_TRACEIO_DEVICE,
               "%s:writeInt32: function=%d, value=%d\n",
               DRIVER_NAME, function, value);
     }
@@ -539,9 +547,17 @@ asynStatus ADCrayDl::writeFloat64(asynUser *pasynUser, epicsFloat64 value)
 {
     const int function = pasynUser->reason;
 
-    std::cout << "writeFloat64 func: " << function << ", value: " << value << std::endl;
+    if (isAcquisitionRunning())
+    {
+        // Changing parameters while acquisition is running is not allowed.
+        asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+            "Changing parameters during acquisition is not allowed.");
+        
+        return asynError;
+    }
 
-    // REVIEW: Are the various configuration changes safe while acquisition is active?
+    asynPrint(pasynUserSelf, ASYN_TRACEIO_DEVICE,
+        "writeFloat64 func: %d, value %f\n", function, value);
 
     // Set the parameter and readback in the parameter library. This may be overwritten when we read back the
     // status at the end, but that's OK.
@@ -585,7 +601,7 @@ asynStatus ADCrayDl::writeFloat64(asynUser *pasynUser, epicsFloat64 value)
     }
     else
     {
-        asynPrint(pasynUser, ASYN_TRACEIO_DRIVER,
+        asynPrint(pasynUser, ASYN_TRACEIO_DEVICE,
               "%s:writeFloat64: function=%d, value=%f\n",
               DRIVER_NAME, function, value);
     }
@@ -593,25 +609,9 @@ asynStatus ADCrayDl::writeFloat64(asynUser *pasynUser, epicsFloat64 value)
     return status;
 }
 
-// REVIEW: You must hold the asynPortDriver lock when calling functions things like set*Param,
-//         get*Param, callParamCallbacks and updateTimeStamp (for the latter I'm not sure).
-//         Also it it is unclear to me if any of these callbacks could be called from
-//         requests to the driver (in which case the port already be locked in the callback).
-//         You need to precisely understand these calls and ensure that the driver is locked
-//         when calling the mentioned asynPortDriver functions, and I think trying to lock a
-//         port if already locked would also be an issue.
-// NOTE: Once the callbacks are fixed to lock the port, we introduce possibility for
-//       deadlock in m_pollingThread.join() above, under the assumption that
-//       QueryStatus() may call the callbacks. If you know that not to be true then,
-//       there is no issue, otherwise it needs to be addressed. I see two fixes:
-//       - Easy fix: Unlock and re-lock the driver around the join.
-//       - Harder fix (and easier to mess up): Only ever start one thread and
-//         synchronize with it to start and stop polling as needed, with the help of
-//         condition_variable or epicsEvent.
-
 void ADCrayDl::VirtualStatusChanged(const craydl::VStatusParameter *vstatus)
 {
-    std::lock_guard<ADCrayDl> lock(*this); // Lock asyn driver;
+    std::lock_guard<ADCrayDl> lock(*this); // Lock asyn driver
 
     // Conversion from string to double will throw an exception if the conversion isn't successful.
     switch (vstatus->key())
@@ -658,7 +658,7 @@ void ADCrayDl::VirtualStatusChanged(const craydl::VStatusParameter *vstatus)
 
 void ADCrayDl::StatusFlagChanged(const craydl::VStatusFlag *vstatus)
 {
-    std::lock_guard<ADCrayDl> lock(*this); // Lock asyn driver;
+    std::lock_guard<ADCrayDl> lock(*this); // Lock asyn driver
 
     switch (vstatus->key())
     {
@@ -705,7 +705,7 @@ void ADCrayDl::SequenceStarted()
 
 void ADCrayDl::SequenceEnded()
 {
-    std::lock_guard<ADCrayDl> lock(*this); // Lock asyn driver;
+    std::lock_guard<ADCrayDl> lock(*this); // Lock asyn driver
 
     const int status = setIntegerParam(ADAcquire, 0);
     assert(status == 0);
@@ -750,17 +750,16 @@ std::string ADCrayDl::secondsSinceEpochToString(const time_t timestamp)
 {
     char timeString[32];
 
-    // REVIEW: I would use a function-style cast here.
     const epicsTimeStamp stamp = { static_cast<epicsUInt32>(timestamp), 0 };
     epicsTimeToStrftime(timeString, sizeof(timeString), TIMESTAMP_FORMAT, &stamp);
 
     return std::string(timeString);
 }
 
-// REVIEW: Is BackgroundFrameReady called from within AcquireNewBackground? It matters
-//         because it determines whether you need to lock the driver here.
 void ADCrayDl::BackgroundFrameReady(const craydl::RxFrame *frame_p)
 {
+    std::lock_guard<ADCrayDl> lock(*this); // Lock asyn driver
+
     // Handle pedestals
     const craydl::FrameMetaData &metadata = frame_p->metaData();
 
@@ -796,7 +795,7 @@ void ADCrayDl::FrameReady(int frame_number, const craydl::RxFrame *frame_p)
     // Set timestamp
     inArray->epicsTS = newEvrTime;
 
-    std::lock_guard<ADCrayDl> lock(*this); // Lock asyn driver;
+    std::lock_guard<ADCrayDl> lock(*this); // Lock asyn driver
 
     increaseArrayCounter();
 
@@ -812,11 +811,6 @@ void ADCrayDl::FrameReady(int frame_number, const craydl::RxFrame *frame_p)
 
     // The module is done with the frame.
     inArray->release();
-
-    // REVIEW: Note that some drivers save the last frame into pArrays[0],
-    //         that allows EPICS to specifically read the latest frame even while
-    //         array callbacks are disabled (using record with SCAN set to
-    //         something other than I/O Intr). Consider if you want to do that.
 }
 
 void ADCrayDl::FrameAborted(int frame_number)
@@ -900,14 +894,12 @@ void ADCrayDl::increaseArrayCounter()
 void ADCrayDl::registerAllStatusCallbacks()
 {
     const std::set<craydl::VStatusParameter*> statusSet = m_rayonixDetector->SupportedStatusSet();
-
     for (std::set<craydl::VStatusParameter*>::const_iterator si = statusSet.begin(); si != statusSet.end(); si++)
     {
         m_rayonixDetector->RegisterStateChangeCallback(*si, this);
     }
 
     const std::set<craydl::VStatusFlag*> statusFlagSet = m_rayonixDetector->SupportedStatusFlagSet();
-
     for (std::set<craydl::VStatusFlag*>::const_iterator si = statusFlagSet.begin(); si != statusFlagSet.end(); si++)
     {
         m_rayonixDetector->RegisterStateChangeCallback(*si, this);
@@ -926,11 +918,9 @@ void ADCrayDl::registerAllStatusCallbacks()
   */
 ADCrayDl::ADCrayDl(const char *portName, NDDataType_t dataType,
                          int maxBuffers, size_t maxMemory, int priority, int stackSize)
-    // REVIEW: Add comments to make it clear what is being passed, like /*maxAddr=*/1
-    //         where this is not already clear.
-    : ADDriver(portName, 1, 0, maxBuffers, maxMemory,
-               0, 0, /* No interfaces beyond those set in ADDriver.cpp */
-               0, 1, /* ASYN_CANBLOCK=0, ASYN_MULTIDEVICE=0, autoConnect=1 */
+    : ADDriver(portName, /*maxAddr=*/1, /*numParams=*/0, maxBuffers, maxMemory,
+               /*interfaceMask=*/0, /*interruptMask=*/0, /* No interfaces beyond those set in ADDriver.cpp */
+               /*asynFlag=*/0, /*autoConnect=*/1, /* ASYN_CANBLOCK=0, ASYN_MULTIDEVICE=0, autoConnect=1 */
                priority, stackSize),
        m_rayonixDetector(craydl::RxDetector::create()),
        m_running(false),
@@ -1038,7 +1028,8 @@ ADCrayDl::ADCrayDl(const char *portName, NDDataType_t dataType,
 
     m_rayonixDetector->SendParameters();
 
-    std::cout << "Opening Detector" << std::endl;
+    asynPrint(pasynUserSelf, ASYN_TRACEIO_DEVICE, "Opening detector\n");
+
     craydl::RxReturnStatus error = m_rayonixDetector->Open();
     if (error.IsError())
     {
@@ -1052,9 +1043,8 @@ ADCrayDl::ADCrayDl(const char *portName, NDDataType_t dataType,
 
     if (status)
     {
-        // REVIEW: Bad error message.
-        printf("%s:%s epicsThreadCreate failure for image task\n",
-            DRIVER_NAME, functionName);
+        asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+            "%s:%s Failed setting default parameter values\n", DRIVER_NAME, functionName);
         return;
     }
 
@@ -1066,7 +1056,9 @@ ADCrayDl::~ADCrayDl()
     m_running = false;
     if (m_pollingThread.joinable())
     {
+        unlock();
         m_pollingThread.join();
+        lock();
     }
 
     // Close connection to the detector

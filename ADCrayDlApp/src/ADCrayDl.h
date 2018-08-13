@@ -342,6 +342,13 @@ private:
     void registerAllStatusCallbacks();
 
     /**
+     * @brief Checks if acquisition is running.
+     * 
+     * @return bool True when acquisition is running, false when not.
+     */
+    bool isAcquisitionRunning();
+
+    /**
      * @brief Converts a posix time variable to seconds since Epics epoch.
      * 
      * @param posixTime Input posix time.
