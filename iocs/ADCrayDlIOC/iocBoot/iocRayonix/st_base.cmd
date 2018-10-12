@@ -105,7 +105,7 @@ dbpf $(TSS):TsPolicy SYNCED
 
 dbpf $(PREFIX)$(CAM_PREFIX)ArrayCallbacks 1
 
-var DEBUG_TS_FIFO 5
+#var DEBUG_TS_FIFO 5
 dbpf $(EVR):TRIG0:TEC 45
 dbpf $(EVR):TRIG0:TCTL 1
 
